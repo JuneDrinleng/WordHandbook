@@ -57,6 +57,14 @@ module.exports = {
       });
     });
   },
+  clearAllWords() {
+    return new Promise((resolve, reject) => {
+      db.run(`DELETE FROM words`, [], function (err) {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  },
 
   updateWord(id, en, zh) {
     return new Promise((resolve, reject) => {

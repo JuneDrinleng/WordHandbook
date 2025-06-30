@@ -9,6 +9,9 @@
   </head>
   <body style="padding-top: 36px">
     <div class="titlebar">
+      <div class="pin-toggle" onclick="togglePin()" title="置顶切换">
+        <i id="pin-icon" class="fa-solid fa-thumbtack"></i>
+      </div>
       <div class="window-controls">
         <div
           class="btn min"
@@ -41,6 +44,10 @@
           <input id="zh" placeholder="如：苹果" />
         </div>
         <button id="saveBtn"><i class="fa fa-save"></i> 保存词条</button>
+        <p
+          id="error-msg"
+          style="color: red; font-size: 14px; margin-top: 10px; display: none"
+        ></p>
       </div>
     </div>
 
@@ -58,7 +65,30 @@
     <!-- 设置页 -->
     <div id="view-settings" class="view">
       <h2>设置</h2>
-      <p>你可以在这里添加设置项</p>
+
+      <!-- 导入导出卡片 -->
+      <div class="settings-card">
+        <h3><i class="fa fa-file-csv"></i> 导入 / 导出</h3>
+        <div class="settings-buttons">
+          <button onclick="importCSV()">
+            <i class="fa fa-file-import"></i> 导入CSV文件
+          </button>
+          <button onclick="exportCSV()">
+            <i class="fa fa-file-export"></i> 导出为CSV文件
+          </button>
+        </div>
+      </div>
+
+      <!-- 清空单词本卡片 -->
+      <div class="settings-card danger-card">
+        <h3><i class="fa fa-trash"></i> 清空单词本</h3>
+        <p style="margin-bottom: 10px; color: #b00020">
+          此操作不可恢复，请谨慎操作。
+        </p>
+        <button onclick="clearAllWords()" class="danger-button">
+          <i class="fa fa-trash"></i> 立即清空所有词条
+        </button>
+      </div>
     </div>
 
     <!-- 底部导航 -->
@@ -114,11 +144,36 @@
       async function saveWord() {
         const en = document.getElementById("en").value.trim();
         const zh = document.getElementById("zh").value.trim();
-        if (en && zh) {
-          await window.api.saveWord({ en, zh });
-          document.getElementById("en").value = "";
-          document.getElementById("zh").value = "";
+        const errorMsg = document.getElementById("error-msg");
+
+        const isEnglish = /^[a-zA-Z\s\-]+$/.test(en);
+        const isChinese = /^[\u4e00-\u9fa5\s·，。、；：“”‘’！]+$/.test(zh);
+
+        // 清空之前错误提示
+        errorMsg.style.display = "none";
+        errorMsg.textContent = "";
+
+        if (!en || !zh) {
+          errorMsg.textContent = "请填写完整的英文和中文词条！";
+          errorMsg.style.display = "block";
+          return;
         }
+
+        if (!isEnglish) {
+          errorMsg.textContent = "英文输入框只能包含英文字母、空格或连字符！";
+          errorMsg.style.display = "block";
+          return;
+        }
+
+        if (!isChinese) {
+          errorMsg.textContent = "中文输入框只能包含中文字符和标点！";
+          errorMsg.style.display = "block";
+          return;
+        }
+
+        await window.api.saveWord({ en, zh });
+        document.getElementById("en").value = "";
+        document.getElementById("zh").value = "";
       }
 
       async function loadWords() {
@@ -193,6 +248,45 @@
 
       loadWords();
       document.getElementById("saveBtn").addEventListener("click", saveWord);
+
+      let isPinned = false;
+
+      async function togglePin() {
+        isPinned = !isPinned;
+        await window.api.setAlwaysOnTop(isPinned);
+
+        const pin = document.querySelector(".pin-toggle");
+        if (isPinned) {
+          pin.classList.add("pinned");
+        } else {
+          pin.classList.remove("pinned");
+        }
+      }
+
+      async function importCSV() {
+        const path = await window.api.selectCSVFile();
+        if (path) {
+          const count = await window.api.importFromCSV(path);
+          alert(`成功导入 ${count} 条词条！`);
+          loadWords();
+        }
+      }
+
+      async function exportCSV() {
+        const path = await window.api.selectSavePath();
+        if (path) {
+          await window.api.exportToCSV(path);
+          alert("导出成功！");
+        }
+      }
+      async function clearAllWords() {
+        const confirmed = confirm("确定要清空所有单词吗？此操作不可恢复！");
+        if (!confirmed) return;
+
+        await window.api.clearWords();
+        alert("已清空！");
+        loadWords(); // 刷新页面
+      }
     </script>
   </body>
 </html>

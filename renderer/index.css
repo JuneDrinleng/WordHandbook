@@ -128,6 +128,31 @@ body::before {
 .btn.max::after {
   --r: 90deg;
 }
+/* =====================
+   pin Toggle Button
+   ===================== */
+.pin-toggle {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.pin-toggle i {
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* 更柔和的过渡 */
+}
+
+.pin-toggle.pinned i {
+  transform: rotate(-45deg);
+  color: var(--accent);
+}
 
 /* =====================
    View Containers
@@ -357,11 +382,45 @@ ul {
 }
 
 /* =====================
-   Settings View
+   Settings 卡片样式
    ===================== */
 #view-settings p {
   margin-top: 6px;
   color: #555;
   font-size: 14px;
   line-height: 1.6;
+}
+
+.settings-card {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-m);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: box-shadow var(--transition);
+}
+
+.settings-card h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+
+.settings-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.danger-card {
+  border-left: 4px solid var(--accent);
+}
+
+.danger-button {
+  background: var(--accent);
+  color: #fff;
+}
+
+.danger-button:hover {
+  background: var(--accent-dark);
 }
