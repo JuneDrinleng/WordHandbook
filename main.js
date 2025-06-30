@@ -53,13 +53,34 @@ ipcMain.handle("import-csv", async (event, filePath) => {
   const content = fs.readFileSync(filePath, "utf-8");
   const lines = content.split("\n").filter((l) => l.trim());
   let count = 0;
+  let skipped = 0; // 重复跳过条数
+  function isEnglish(text) {
+    return /^[\x00-\x7F]+$/.test(text); // ASCII范围判断，不包含中文
+  }
+
+  function isChinese(text) {
+    return /^[\u4e00-\u9fa5]+$/.test(text); // 简体中文常用字符
+  }
+
   for (let line of lines) {
-    const [en, zh] = line.split(",");
-    if (en && zh) {
-      await db.insertWord(en.trim(), zh.trim()); // ✅ 使用已有函数
+    const [enRaw, zhRaw] = line.split(",");
+    const en = enRaw?.trim();
+    const zh = zhRaw?.trim();
+
+    if (!en || !zh) continue; // 空行跳过
+
+    if (!isEnglish(en)) continue; // 英文部分不是英文，跳过
+
+    if (!isChinese(zh)) continue; // 中文部分不是中文，跳过
+
+    const inserted = await db.insertWord(en, zh);
+    if (inserted) {
       count++;
+    } else {
+      skipped++;
     }
   }
+
   return count;
 });
 

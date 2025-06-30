@@ -12,12 +12,23 @@ module.exports = {
 
   insertWord(en, zh) {
     return new Promise((resolve, reject) => {
-      db.run(
-        `INSERT INTO words (en, zh) VALUES (?, ?)`,
+      // 查询是否已经存在相同的 en 和 zh
+      db.get(
+        `SELECT * FROM words WHERE en = ? AND zh = ?`,
         [en, zh],
-        function (err) {
-          if (err) reject(err);
-          else resolve();
+        function (err, row) {
+          if (err) return reject(err);
+          if (row) return resolve(false); // 已存在，不插入
+
+          // 否则插入
+          db.run(
+            `INSERT INTO words (en, zh) VALUES (?, ?)`,
+            [en, zh],
+            function (err) {
+              if (err) reject(err);
+              else resolve(true); // 插入成功
+            }
+          );
         }
       );
     });
