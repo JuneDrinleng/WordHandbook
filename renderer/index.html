@@ -28,14 +28,25 @@
       </div>
     </div>
 
+    <!-- 添加生词页 -->
     <div id="view-input" class="view">
-      <h2>添加生词</h2>
-      <input id="en" placeholder="英文" />
-      <input id="zh" placeholder="中文" />
-      <button id="saveBtn">保存</button>
+      <div class="input-wrapper">
+        <h2>添加生词</h2>
+        <div class="form-group">
+          <label for="en">英文单词</label>
+          <input id="en" placeholder="如：apple" />
+        </div>
+        <div class="form-group">
+          <label for="zh">中文释义</label>
+          <input id="zh" placeholder="如：苹果" />
+        </div>
+        <button id="saveBtn"><i class="fa fa-save"></i> 保存词条</button>
+      </div>
     </div>
 
+    <!-- 展示词汇页 -->
     <div id="view-display" class="view active">
+      <h2>生词本</h2>
       <input id="search" placeholder="搜索中/英文" />
       <ul id="results"></ul>
       <div id="context-menu">
@@ -44,25 +55,26 @@
       </div>
     </div>
 
+    <!-- 设置页 -->
     <div id="view-settings" class="view">
       <h2>设置</h2>
       <p>你可以在这里添加设置项</p>
     </div>
 
+    <!-- 底部导航 -->
     <div class="bottom-nav">
       <button onclick="switchView('input')">
         <i class="fa-solid fa-plus"></i>
       </button>
-
       <button class="active" onclick="switchView('display')">
         <i class="fa-solid fa-list"></i>
       </button>
-
       <button onclick="switchView('settings')">
         <i class="fa-solid fa-gear"></i>
       </button>
     </div>
 
+    <!-- 编辑模态框 -->
     <div id="edit-modal" class="modal">
       <div class="modal-content">
         <h3>修改词条</h3>
@@ -76,6 +88,8 @@
         </div>
       </div>
     </div>
+
+    <!-- JS 脚本 -->
     <script>
       let allWords = [];
       let selectedWord = null;
@@ -85,10 +99,12 @@
           .querySelectorAll(".view")
           .forEach((div) => div.classList.remove("active"));
         document.querySelector(`#view-${view}`).classList.add("active");
+
         document
           .querySelectorAll(".bottom-nav button")
           .forEach((btn) => btn.classList.remove("active"));
         event.currentTarget.classList.add("active");
+
         if (view === "display") {
           loadWords();
           document.getElementById("search").value = "";
