@@ -71,7 +71,7 @@ ipcMain.handle("select-save-path", async () => {
 ipcMain.handle("export-csv", async (event, filePath) => {
   const words = await db.getAllWordsSorted(); // ✅ 改这里
   const content = words.map((w) => `${w.en},${w.zh}`).join("\n");
-  fs.writeFileSync(filePath, content, "utf-8");
+  fs.writeFileSync(filePath, "\uFEFF" + content, "utf-8");
 });
 ipcMain.handle("clear-words", async () => {
   await db.clearAllWords();
