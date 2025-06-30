@@ -100,7 +100,6 @@
         const zh = document.getElementById("zh").value.trim();
         if (en && zh) {
           await window.api.saveWord({ en, zh });
-          alert("保存成功");
           document.getElementById("en").value = "";
           document.getElementById("zh").value = "";
         }
@@ -143,14 +142,10 @@
 
       function deleteWord() {
         if (selectedWord) {
-          if (
-            confirm(`确定要删除：${selectedWord.en} - ${selectedWord.zh} 吗？`)
-          ) {
-            window.api.deleteWord(selectedWord.id).then(() => {
-              loadWords();
-              selectedWord = null;
-            });
-          }
+          window.api.deleteWord(selectedWord.id).then(() => {
+            loadWords();
+            selectedWord = null;
+          });
         }
       }
 
