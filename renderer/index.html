@@ -118,6 +118,17 @@
         </div>
       </div>
     </div>
+    <!-- 通用提示模态框 -->
+    <div id="custom-modal" class="modal">
+      <div class="modal-content">
+        <h3 id="modal-title">提示</h3>
+        <p id="modal-message"></p>
+        <div class="modal-actions">
+          <button id="modal-ok">确定</button>
+          <button id="modal-cancel" style="display: none">取消</button>
+        </div>
+      </div>
+    </div>
 
     <!-- JS 脚本 -->
     <script>
@@ -267,7 +278,7 @@
         const path = await window.api.selectCSVFile();
         if (path) {
           const count = await window.api.importFromCSV(path);
-          alert(`成功导入 ${count} 条词条！`);
+          await showModal(`成功导入 ${count} 条词条！`);
           loadWords();
         }
       }
@@ -276,16 +287,52 @@
         const path = await window.api.selectSavePath();
         if (path) {
           await window.api.exportToCSV(path);
-          alert("导出成功！");
+          await showModal("导出成功！");
         }
       }
       async function clearAllWords() {
-        const confirmed = confirm("确定要清空所有单词吗？此操作不可恢复！");
+        const confirmed = await showModal(
+          "确定要清空所有单词吗？此操作不可恢复！",
+          { showCancel: true }
+        );
         if (!confirmed) return;
 
         await window.api.clearWords();
-        alert("已清空！");
+        showModal("已清空！");
         loadWords(); // 刷新页面
+      }
+
+      function showModal(message, options = {}) {
+        return new Promise((resolve) => {
+          const modal = document.getElementById("custom-modal");
+          const title = document.getElementById("modal-title");
+          const msg = document.getElementById("modal-message");
+          const okBtn = document.getElementById("modal-ok");
+          const cancelBtn = document.getElementById("modal-cancel");
+
+          title.textContent = options.title || "提示";
+          msg.textContent = message;
+          okBtn.textContent = options.okText || "确定";
+          cancelBtn.textContent = options.cancelText || "取消";
+
+          // 显示或隐藏取消按钮
+          if (options.showCancel) {
+            cancelBtn.style.display = "inline-block";
+          } else {
+            cancelBtn.style.display = "none";
+          }
+
+          modal.style.display = "flex";
+
+          okBtn.onclick = () => {
+            modal.style.display = "none";
+            resolve(true);
+          };
+          cancelBtn.onclick = () => {
+            modal.style.display = "none";
+            resolve(false);
+          };
+        });
       }
     </script>
   </body>
