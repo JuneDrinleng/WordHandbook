@@ -6,7 +6,15 @@
 
 借鉴 native speaker 的词汇有时候可能比用 ai 或者翻译工具的得来的更原汁原味
 
-## 2 Project Structure
+## 2 Overview
+
+快速检索的单词本，方便的实现添加生词，可以直接以csv格式导入和导出。
+
+<img src="./README.assets/image-20250701134726240.png" alt="image-20250701134726240" style="zoom:50%;" />
+
+
+
+## 3 Project Structure
 
 ```
 wordbook-app/
