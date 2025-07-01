@@ -65,6 +65,19 @@
     <!-- 设置页 -->
     <div id="view-settings" class="view">
       <h2>设置</h2>
+      <!-- 导入导出卡片 -->
+      <div class="settings-card">
+        <h3><i class="fa fa-file-csv"></i> 导入 / 导出 CSV</h3>
+        <div class="settings-buttons">
+          <button onclick="exportCSV()">
+            <i class="fa fa-download"></i> 导出词库
+          </button>
+          <button onclick="importCSV()">
+            <i class="fa fa-upload"></i> 导入词库
+          </button>
+        </div>
+      </div>
+
       <!-- API 地址卡片 -->
       <div class="settings-card">
         <h3><i class="fa fa-plug"></i> API 地址</h3>
@@ -337,6 +350,16 @@
           await showModal(`已保存！所有接口已切换至：\n${val}`);
         });
       });
+      async function exportCSV() {
+        const msg = await window.api.exportCSV();
+        showModal(msg || "导出取消");
+      }
+
+      async function importCSV() {
+        const msg = await window.api.importCSV();
+        showModal(msg || "导入取消");
+        loadWords(); // 刷新列表
+      }
     </script>
   </body>
 </html>

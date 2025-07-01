@@ -1,47 +1,54 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
-// 👉 把此处改成你的线上域名或公网 IP
-const API = "https://wordapi.junedrinleng.com";
-
-/* ──────────── 帮助函数 ──────────── */
-function json(r) {
-  if (!r.ok) throw new Error(r.statusText);
-  return r.json();
-}
-function ok(r) {
-  if (!r.ok) throw new Error(r.statusText);
-}
-
-/* ──────────── 暴露给渲染进程的统一 API ──────────── */
 contextBridge.exposeInMainWorld("api", {
-  /* === 窗口 / 系统 === */
   winControl: (action) => ipcRenderer.send("win-control", action),
   setAlwaysOnTop: (flag) => ipcRenderer.invoke("set-always-on-top", flag),
-  selectCSVFile: () => ipcRenderer.invoke("select-csv-file"),
-  selectSavePath: () => ipcRenderer.invoke("select-save-path"),
+  importCSV: () => ipcRenderer.invoke("import-csv"),
+  exportCSV: () => ipcRenderer.invoke("export-csv"),
 
-  /* === 词库 CRUD：全部走远端 API === */
   saveWord: (d) =>
-    fetch(`${API}/words`, {
+    fetch("https://wordapi.junedrinleng.com/words", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(d),
-    }).then(ok),
+    }).then((r) => {
+      if (!r.ok) throw new Error(r.statusText);
+    }),
 
-  getWords: () => fetch(`${API}/words`).then(json),
+  getWords: () =>
+    fetch("https://wordapi.junedrinleng.com/words").then((r) => {
+      if (!r.ok) throw new Error(r.statusText);
+      return r.json();
+    }),
 
   searchWord: (kw) =>
-    fetch(`${API}/words?q=${encodeURIComponent(kw)}`).then(json),
+    fetch(
+      `https://wordapi.junedrinleng.com/words?q=${encodeURIComponent(kw)}`
+    ).then((r) => {
+      if (!r.ok) throw new Error(r.statusText);
+      return r.json();
+    }),
 
   updateWord: ({ id, en, zh }) =>
-    fetch(`${API}/words/${id}`, {
+    fetch(`https://wordapi.junedrinleng.com/words/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ en, zh }),
-    }).then(ok),
+    }).then((r) => {
+      if (!r.ok) throw new Error(r.statusText);
+    }),
 
   deleteWord: (id) =>
-    fetch(`${API}/words/${id}`, { method: "DELETE" }).then(ok),
+    fetch(`https://wordapi.junedrinleng.com/words/${id}`, {
+      method: "DELETE",
+    }).then((r) => {
+      if (!r.ok) throw new Error(r.statusText);
+    }),
 
-  clearWords: () => fetch(`${API}/words`, { method: "DELETE" }).then(ok),
+  clearWords: () =>
+    fetch("https://wordapi.junedrinleng.com/words", {
+      method: "DELETE",
+    }).then((r) => {
+      if (!r.ok) throw new Error(r.statusText);
+    }),
 });
