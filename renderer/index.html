@@ -334,6 +334,25 @@
           };
         });
       }
+      const enInput = document.getElementById("en");
+      const zhInput = document.getElementById("zh");
+      const errLabel = document.getElementById("error-msg");
+
+      enInput.addEventListener("keydown", async (e) => {
+        if (e.key !== "Enter") return;
+
+        const text = enInput.value.trim();
+        if (!text) return;
+
+        try {
+          const zh = await window.api.translate(text); // 👈 调用你刚暴露的接口
+          zhInput.value = zh;
+        } catch (err) {
+          console.error(err);
+          errLabel.textContent = "翻译失败，请检查 Deeplx 是否启动";
+          errLabel.style.display = "block";
+        }
+      });
     </script>
   </body>
 </html>

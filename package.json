@@ -6,6 +6,7 @@
   "icon": "favicon.ico",
   "dependencies": {
     "electron": "^37.1.0",
+    "node-fetch": "^2.7.0",
     "sqlite3": "^5.1.7"
   }
 }

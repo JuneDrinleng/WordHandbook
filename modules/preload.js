@@ -15,4 +15,5 @@ contextBridge.exposeInMainWorld("api", {
   importFromCSV: (filePath) => ipcRenderer.invoke("import-csv", filePath),
   selectSavePath: () => ipcRenderer.invoke("select-save-path"),
   exportToCSV: (filePath) => ipcRenderer.invoke("export-csv", filePath),
+  translate: (text) => ipcRenderer.invoke("translate", text),
 });

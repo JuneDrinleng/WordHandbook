@@ -103,7 +103,7 @@ ipcMain.handle("clear-words", async () => {
 let deeplxProcess = null;
 
 function startDeeplx() {
-  const exePath = path.join(__dirname, "assets", "deeplx.exe"); // 你打包时的路径
+  const exePath = path.join(__dirname, "assets", "deepl.exe"); // 你打包时的路径
   deeplxProcess = spawn(exePath, [], {
     detached: false,
     stdio: "ignore",
