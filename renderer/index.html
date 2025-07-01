@@ -340,15 +340,23 @@
         const input = document.getElementById("api-input");
         const saveBtn = document.getElementById("api-save-btn");
 
-        // 页面初始化
         input.value = localStorage.getItem("apiBase");
 
+        // 保存按钮逻辑
         saveBtn.addEventListener("click", async () => {
           const val = input.value.trim();
-
           localStorage.setItem("apiBase", val);
+
+          // ✅ 通知主进程
+          await window.api.setApiBase(val);
           await showModal(`已保存！所有接口已切换至：\n${val}`);
         });
+
+        // ✅ 页面初始加载时也通知主进程
+        if (input.value.trim()) {
+          window.api.setApiBase(input.value.trim());
+        }
+        loadWords();
       });
       async function exportCSV() {
         const msg = await window.api.exportCSV();

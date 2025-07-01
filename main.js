@@ -9,6 +9,8 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
+let apiBase = null;
+
 let tray = null;
 /*------ ipc part --------*/
 ipcMain.on("win-control", (event, action) => {
@@ -36,6 +38,12 @@ ipcMain.handle("set-always-on-top", (event, flag) => {
   const win = BrowserWindow.fromWebContents(event.sender);
   win.setAlwaysOnTop(flag);
 });
+
+ipcMain.handle("set-api-base", (event, url) => {
+  apiBase = url;
+  console.log("✅ 设置 API 地址为：", apiBase);
+});
+
 // 保存数据为 CSV
 ipcMain.handle("export-csv", async () => {
   const { canceled, filePath } = await dialog.showSaveDialog({
@@ -47,7 +55,7 @@ ipcMain.handle("export-csv", async () => {
   if (canceled || !filePath) return;
 
   // 拉取数据库中的所有词条
-  const res = await fetch("https://wordapi.junedrinleng.com/words");
+  const res = await fetch(`${apiBase}/words`);
   const words = await res.json();
 
   const content = words.map((w) => `"${w.en}","${w.zh}"`).join("\n");
@@ -71,7 +79,7 @@ ipcMain.handle("import-csv", async () => {
   for (let line of lines) {
     const [en, zh] = line.split(",").map((s) => s.replace(/^"|"$/g, "").trim());
     if (en && zh) {
-      await fetch("https://wordapi.junedrinleng.com/words", {
+      await fetch(`${apiBase}/words`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ en, zh }),
