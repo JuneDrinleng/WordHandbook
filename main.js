@@ -8,7 +8,7 @@ const {
   dialog,
 } = require("electron");
 const path = require("path");
-const db = require("./db");
+const db = require("./modules/db");
 let tray = null;
 const fs = require("fs");
 /*------ ipc part --------*/
@@ -108,7 +108,7 @@ function createWindows() {
     resizable: false, // 防止用户拖动改变窗口大小
     icon: path.join(__dirname, "favicon.ico"),
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "modules", "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
     },
