@@ -9,6 +9,7 @@ const {
 } = require("electron");
 const path = require("path");
 const db = require("./modules/db");
+const { spawn } = require("child_process");
 let tray = null;
 const fs = require("fs");
 /*------ ipc part --------*/
@@ -99,6 +100,24 @@ ipcMain.handle("clear-words", async () => {
 });
 
 /*------ function part --------*/
+let deeplxProcess = null;
+
+function startDeeplx() {
+  const exePath = path.join(__dirname, "assets", "deeplx.exe"); // 你打包时的路径
+  deeplxProcess = spawn(exePath, [], {
+    detached: false,
+    stdio: "ignore",
+  });
+
+  console.log("✅ deeplx 已启动");
+}
+
+function stopDeeplx() {
+  if (deeplxProcess) {
+    deeplxProcess.kill();
+    console.log("🛑 deeplx 已关闭");
+  }
+}
 function createWindows() {
   let scale = 40;
   mainWindow = new BrowserWindow({
@@ -136,6 +155,7 @@ function createTray() {
 }
 /*------ app part --------*/
 app.whenReady().then(() => {
+  startDeeplx(); // 启动 deeplx 服务
   db.init();
   createTray();
   createWindows();
@@ -164,5 +184,6 @@ app.whenReady().then(() => {
 });
 
 app.on("will-quit", () => {
+  stopDeeplx();
   globalShortcut.unregisterAll();
 });
