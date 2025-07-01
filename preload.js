@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require("electron");
+
 contextBridge.exposeInMainWorld("api", {
   winControl: (action) => ipcRenderer.send("win-control", action),
   setAlwaysOnTop: (flag) => ipcRenderer.invoke("set-always-on-top", flag),
@@ -6,49 +7,77 @@ contextBridge.exposeInMainWorld("api", {
   exportCSV: () => ipcRenderer.invoke("export-csv"),
   setApiBase: (url) => ipcRenderer.invoke("set-api-base", url),
 
-  saveWord: (d) =>
-    fetch(`${localStorage.getItem("apiBase")}/words`, {
+  saveWord: (d) => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/words`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(d),
     }).then((r) => {
       if (!r.ok) throw new Error(r.statusText);
-    }),
+    });
+  },
 
-  getWords: () =>
-    fetch(`${localStorage.getItem("apiBase")}/words`).then((r) => {
+  getWords: () => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/words`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).then((r) => {
       if (!r.ok) throw new Error(r.statusText);
       return r.json();
-    }),
+    });
+  },
 
-  searchWord: (kw) =>
-    fetch(
-      `${localStorage.getItem("apiBase")}/words?q=${encodeURIComponent(kw)}`
-    ).then((r) => {
+  searchWord: (kw) => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/words?q=${encodeURIComponent(kw)}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).then((r) => {
       if (!r.ok) throw new Error(r.statusText);
       return r.json();
-    }),
+    });
+  },
 
-  updateWord: ({ id, en, zh }) =>
-    fetch(`${localStorage.getItem("apiBase")}/words/${id}`, {
+  updateWord: ({ id, en, zh }) => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/words/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ en, zh }),
     }).then((r) => {
       if (!r.ok) throw new Error(r.statusText);
-    }),
+    });
+  },
 
-  deleteWord: (id) =>
-    fetch(`${localStorage.getItem("apiBase")}/words/${id}`, {
+  deleteWord: (id) => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/words/${id}`, {
       method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     }).then((r) => {
       if (!r.ok) throw new Error(r.statusText);
-    }),
+    });
+  },
 
-  clearWords: () =>
-    fetch(`${localStorage.getItem("apiBase")}/words`, {
+  clearWords: () => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/words`, {
       method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     }).then((r) => {
       if (!r.ok) throw new Error(r.statusText);
-    }),
+    });
+  },
 });

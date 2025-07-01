@@ -3,6 +3,7 @@ import cors from "cors";
 import { pool } from "./db.js";
 import dotenv from "dotenv";
 import { parse } from "fast-csv";
+import fs from "fs";
 dotenv.config();
 
 const app = express();
@@ -11,43 +12,20 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// ✅ 鉴权中间件：校验 Authorization token
+app.use((req, res, next) => {
+  const token = req.headers.authorization;
+  const expected = `Bearer ${process.env.API_TOKEN}`;
+  if (token !== expected) {
+    return res
+      .status(403)
+      .json({ error: "Forbidden: Invalid or missing token" });
+  }
+  next();
+});
+
 // ───────────── 业务路由 ─────────────
 
-// POST /words/import   (multipart/form-data 里携带 file 字段)
-app.post("/words/import", async (req, res) => {
-  try {
-    const file = req.files?.file; // 用 express-fileupload 或 multer
-    if (!file) return res.status(400).send("no file");
-
-    const rows = [];
-    await new Promise((resolve, reject) => {
-      fs.createReadStream(file.tempFilePath)
-        .pipe(parse({ headers: false, trim: true }))
-        .on("error", reject)
-        .on("data", (row) => rows.push(row))
-        .on("end", resolve);
-    });
-
-    // 使用 COPY…FROM STDIN 性能更好，这里演示最直观的批量 INSERT
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      for (const [en, zh] of rows) {
-        await client.query(
-          "INSERT INTO words (en, zh) VALUES ($1,$2) ON CONFLICT DO NOTHING",
-          [en, zh]
-        );
-      }
-      await client.query("COMMIT");
-    } finally {
-      client.release();
-    }
-    res.json({ imported: rows.length });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message });
-  }
-});
 // GET /words  或 /words?q=abc
 app.get("/words", async (req, res) => {
   const kw = req.query.q;
@@ -100,6 +78,7 @@ app.delete("/words/:id", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
 // DELETE /words    —— 清空整个词库
 app.delete("/words", async (_req, res) => {
   try {
@@ -111,5 +90,40 @@ app.delete("/words", async (_req, res) => {
   }
 });
 
+// POST /words/import   (multipart/form-data 里携带 file 字段)
+app.post("/words/import", async (req, res) => {
+  try {
+    const file = req.files?.file; // 用 express-fileupload 或 multer
+    if (!file) return res.status(400).send("no file");
+
+    const rows = [];
+    await new Promise((resolve, reject) => {
+      fs.createReadStream(file.tempFilePath)
+        .pipe(parse({ headers: false, trim: true }))
+        .on("error", reject)
+        .on("data", (row) => rows.push(row))
+        .on("end", resolve);
+    });
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      for (const [en, zh] of rows) {
+        await client.query(
+          "INSERT INTO words (en, zh) VALUES ($1,$2) ON CONFLICT DO NOTHING",
+          [en, zh]
+        );
+      }
+      await client.query("COMMIT");
+    } finally {
+      client.release();
+    }
+    res.json({ imported: rows.length });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ───────────── 启动 ─────────────
-app.listen(port, () => console.log(`👍  API running on :${port}`));
+app.listen(port, () => console.log(`👍 API running on :${port}`));

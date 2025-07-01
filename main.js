@@ -54,10 +54,16 @@ ipcMain.handle("export-csv", async () => {
 
   if (canceled || !filePath) return;
 
-  // 拉取数据库中的所有词条
-  const res = await fetch(`${apiBase}/words`);
-  const words = await res.json();
+  const token =
+    await BrowserWindow.getFocusedWindow().webContents.executeJavaScript(
+      "localStorage.getItem('apiToken')"
+    );
 
+  const res = await fetch(`${apiBase}/words`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  const words = await res.json();
   const content = words.map((w) => `"${w.en}","${w.zh}"`).join("\n");
   fs.writeFileSync(filePath, content, "utf-8");
   return "导出成功";
@@ -73,6 +79,11 @@ ipcMain.handle("import-csv", async () => {
 
   if (canceled || filePaths.length === 0) return;
 
+  const token =
+    await BrowserWindow.getFocusedWindow().webContents.executeJavaScript(
+      "localStorage.getItem('apiToken')"
+    );
+
   const content = fs.readFileSync(filePaths[0], "utf-8");
   const lines = content.split("\n");
 
@@ -81,7 +92,10 @@ ipcMain.handle("import-csv", async () => {
     if (en && zh) {
       await fetch(`${apiBase}/words`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ en, zh }),
       });
     }
@@ -89,6 +103,7 @@ ipcMain.handle("import-csv", async () => {
 
   return "导入成功";
 });
+
 /*------ function part --------*/
 function createWindows() {
   let scale = 40;

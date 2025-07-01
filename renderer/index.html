@@ -97,6 +97,18 @@
         <p style="font-size: 13px; color: #777; margin-top: 8px">
           修改后立即生效，若请求异常请检查地址格式。
         </p>
+        <h3><i class="fa fa-key"></i> 访问令牌（Token）</h3>
+        <input
+          id="token-input"
+          placeholder="请输入访问令牌"
+          style="margin-bottom: 12px; width: 100%; max-width: 420px"
+        />
+        <button class="danger-button" id="token-save-btn">
+          <i class="fa fa-save"></i> 保存 Token
+        </button>
+        <p style="font-size: 13px; color: #777; margin-top: 8px">
+          所有接口请求将携带此令牌进行身份校验。
+        </p>
       </div>
       <!-- 清空单词本卡片 -->
       <div class="settings-card danger-card">
@@ -337,26 +349,45 @@
         });
       }
       document.addEventListener("DOMContentLoaded", () => {
-        const input = document.getElementById("api-input");
-        const saveBtn = document.getElementById("api-save-btn");
+        const apiInput = document.getElementById("api-input");
+        const tokenInput = document.getElementById("token-input");
+        const apiSaveBtn = document.getElementById("api-save-btn");
+        const tokenSaveBtn = document.getElementById("token-save-btn");
 
-        input.value = localStorage.getItem("apiBase");
+        apiInput.value = localStorage.getItem("apiBase") || "";
+        tokenInput.value = localStorage.getItem("apiToken") || "";
 
-        // 保存按钮逻辑
-        saveBtn.addEventListener("click", async () => {
-          const val = input.value.trim();
+        apiSaveBtn.addEventListener("click", async () => {
+          const val = apiInput.value.trim();
           localStorage.setItem("apiBase", val);
-
-          // ✅ 通知主进程
           await window.api.setApiBase(val);
-          await showModal(`已保存！所有接口已切换至：\n${val}`);
+          await showModal(`已保存 API 地址：\n${val}`);
+          loadWords();
         });
 
-        // ✅ 页面初始加载时也通知主进程
-        if (input.value.trim()) {
-          window.api.setApiBase(input.value.trim());
-        }
-        loadWords();
+        tokenSaveBtn.addEventListener("click", async () => {
+          const token = tokenInput.value.trim();
+
+          if (token) {
+            localStorage.setItem("apiToken", token);
+
+            try {
+              // 尝试访问 /words 接口验证 token
+              await window.api.getWords();
+              await showModal("✅ Token 已保存并验证成功。");
+              window.location.reload(); // 刷新以应用 token
+            } catch (err) {
+              // localStorage.removeItem("apiToken");
+              await showModal("❌ Token 无效，请重新输入！");
+              window.location.reload();
+            }
+          } else {
+            localStorage.removeItem("apiToken");
+            tokenInput.value = "";
+            await showModal("🚫 Token 已清除，所有请求将不再鉴权");
+            window.location.reload();
+          }
+        });
       });
       async function exportCSV() {
         const msg = await window.api.exportCSV();
