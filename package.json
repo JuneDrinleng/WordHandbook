@@ -1,12 +1,43 @@
 {
+  "name": "word-handbook",
+  "version": "1.0.0",
   "main": "main.js",
+  "author": "June Drinleng",
   "scripts": {
-    "start": "electron ."
+    "start": "chcp 65001 & electron .",
+    "dist": "electron-builder --win --x64"
   },
-  "icon": "favicon.ico",
+  "build": {
+    "appId": "com.example.wordhandbook",
+    "productName": "WordHandbook",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "modules/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json",
+      "favicon.ico"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "./assets/favicon_io/android-chrome-512x512.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "shortcutName": "WordHandbook"
+    }
+  },
   "dependencies": {
-    "electron": "^37.1.0",
-    "node-fetch": "^2.7.0",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "electron-builder": "^26.0.12",
+    "electron": "^37.1.0",
+    "@electron/remote": "^2.0.3"
   }
 }
