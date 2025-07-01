@@ -54,18 +54,39 @@ ipcMain.handle("export-csv", async () => {
 
   if (canceled || !filePath) return;
 
-  const token =
-    await BrowserWindow.getFocusedWindow().webContents.executeJavaScript(
-      "localStorage.getItem('apiToken')"
-    );
+  const win = BrowserWindow.getFocusedWindow();
+
+  const apiBase = await win.webContents.executeJavaScript(
+    "localStorage.getItem('apiBase')"
+  );
+  const token = await win.webContents.executeJavaScript(
+    "localStorage.getItem('apiToken')"
+  );
+
+  if (!apiBase || !apiBase.startsWith("http")) {
+    throw new Error("❌ API 地址未设置或无效");
+  }
 
   const res = await fetch(`${apiBase}/words`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`导出失败：${res.status} - ${errText}`);
+  }
+
   const words = await res.json();
-  const content = words.map((w) => `"${w.en}","${w.zh}"`).join("\n");
-  fs.writeFileSync(filePath, content, "utf-8");
+
+  // ✅ 转义函数：双引号 → 两个双引号，整体用双引号包裹
+  const escapeCSV = (s) => `"${(s || "").replace(/"/g, '""')}"`;
+
+  // ✅ 构建 CSV 内容
+  const csvLines = words.map((w) => `${escapeCSV(w.en)},${escapeCSV(w.zh)}`);
+  const content = "\uFEFF" + csvLines.join("\n"); // 添加 BOM，防止 Excel 中文乱码
+
+  // ✅ 写入文件
+  fs.writeFileSync(filePath, content, "utf8");
   return "导出成功";
 });
 
@@ -79,10 +100,17 @@ ipcMain.handle("import-csv", async () => {
 
   if (canceled || filePaths.length === 0) return;
 
-  const token =
-    await BrowserWindow.getFocusedWindow().webContents.executeJavaScript(
-      "localStorage.getItem('apiToken')"
-    );
+  const win = BrowserWindow.getFocusedWindow();
+  const apiBase = await win.webContents.executeJavaScript(
+    "localStorage.getItem('apiBase')"
+  );
+  const token = await win.webContents.executeJavaScript(
+    "localStorage.getItem('apiToken')"
+  );
+
+  if (!apiBase || !apiBase.startsWith("http")) {
+    throw new Error("❌ API 地址未设置或无效");
+  }
 
   const content = fs.readFileSync(filePaths[0], "utf-8");
   const lines = content.split("\n");
@@ -90,7 +118,7 @@ ipcMain.handle("import-csv", async () => {
   for (let line of lines) {
     const [en, zh] = line.split(",").map((s) => s.replace(/^"|"$/g, "").trim());
     if (en && zh) {
-      await fetch(`${apiBase}/words`, {
+      const res = await fetch(`${apiBase}/words`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,6 +126,17 @@ ipcMain.handle("import-csv", async () => {
         },
         body: JSON.stringify({ en, zh }),
       });
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          // 忽略重复
+          console.log(`跳过重复词条：${en}`);
+          continue;
+        } else {
+          const errText = await res.text();
+          throw new Error(`导入失败：${res.status} - ${errText}`);
+        }
+      }
     }
   }
 
