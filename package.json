@@ -15,7 +15,6 @@
     },
     "files": [
       "main.js",
-      "modules/**/*",
       "renderer/**/*",
       "assets/**/*",
       "package.json",
@@ -32,12 +31,9 @@
       "shortcutName": "WordHandbook"
     }
   },
-  "dependencies": {
-    "sqlite3": "^5.1.7"
-  },
   "devDependencies": {
-    "electron-builder": "^26.0.12",
+    "@electron/remote": "^2.0.3",
     "electron": "^37.1.0",
-    "@electron/remote": "^2.0.3"
+    "electron-builder": "^26.0.12"
   }
 }

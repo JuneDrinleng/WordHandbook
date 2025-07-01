@@ -65,20 +65,26 @@
     <!-- 设置页 -->
     <div id="view-settings" class="view">
       <h2>设置</h2>
-
-      <!-- 导入导出卡片 -->
+      <!-- API 地址卡片 -->
       <div class="settings-card">
-        <h3><i class="fa fa-file-csv"></i> 导入 / 导出</h3>
-        <div class="settings-buttons">
-          <button onclick="importCSV()">
-            <i class="fa fa-file-import"></i> 导入CSV文件
-          </button>
-          <button onclick="exportCSV()">
-            <i class="fa fa-file-export"></i> 导出为CSV文件
-          </button>
-        </div>
-      </div>
+        <h3><i class="fa fa-plug"></i> API 地址</h3>
 
+        <!-- 输入框 -->
+        <input
+          id="api-input"
+          placeholder="https://example.com"
+          style="margin-bottom: 12px; width: 100%; max-width: 420px"
+        />
+
+        <!-- 保存按钮 -->
+        <button class="danger-button" id="api-save-btn">
+          <i class="fa fa-save"></i> 保存
+        </button>
+
+        <p style="font-size: 13px; color: #777; margin-top: 8px">
+          修改后立即生效，若请求异常请检查地址格式。
+        </p>
+      </div>
       <!-- 清空单词本卡片 -->
       <div class="settings-card danger-card">
         <h3><i class="fa fa-trash"></i> 清空单词本</h3>
@@ -273,23 +279,6 @@
           pin.classList.remove("pinned");
         }
       }
-
-      async function importCSV() {
-        const path = await window.api.selectCSVFile();
-        if (path) {
-          const count = await window.api.importFromCSV(path);
-          await showModal(`成功导入 ${count} 条词条！`);
-          loadWords();
-        }
-      }
-
-      async function exportCSV() {
-        const path = await window.api.selectSavePath();
-        if (path) {
-          await window.api.exportToCSV(path);
-          await showModal("导出成功！");
-        }
-      }
       async function clearAllWords() {
         const confirmed = await showModal(
           "确定要清空所有单词吗？此操作不可恢复！",
@@ -334,6 +323,20 @@
           };
         });
       }
+      document.addEventListener("DOMContentLoaded", () => {
+        const input = document.getElementById("api-input");
+        const saveBtn = document.getElementById("api-save-btn");
+
+        // 页面初始化
+        input.value = localStorage.getItem("apiBase");
+
+        saveBtn.addEventListener("click", async () => {
+          const val = input.value.trim();
+
+          localStorage.setItem("apiBase", val);
+          await showModal(`已保存！所有接口已切换至：\n${val}`);
+        });
+      });
     </script>
   </body>
 </html>
