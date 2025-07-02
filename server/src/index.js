@@ -1,19 +1,53 @@
+// server.js — Express + PostgreSQL + 自动白名单
 import express from "express";
 import cors from "cors";
 import { pool } from "./db.js";
 import dotenv from "dotenv";
 import { parse } from "fast-csv";
 import fs from "fs";
+
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// 若部署在反向代理（Nginx / Traefik）后，可开启以获取真实 IP
+if (process.env.TRUST_PROXY) app.set("trust proxy", true);
+
 app.use(cors());
 app.use(express.json());
 
-// ✅ 鉴权中间件：校验 Authorization token
+// ───────────── 白名单缓存 ─────────────
+const whitelist = new Set(); // 已放行 IP
+const whitelistExpire = new Map(); // ip → 过期时间
+const WHITELIST_TTL = 24 * 60 * 60 * 1000; // 24 h，可按需调整
+
+function addToWhitelist(ip) {
+  whitelist.add(ip);
+  whitelistExpire.set(ip, Date.now() + WHITELIST_TTL);
+}
+
+// // 每 10 min 清理一次过期条目
+// setInterval(() => {
+//   const now = Date.now();
+//   for (const [ip, expireAt] of whitelistExpire) {
+//     if (expireAt <= now) {
+//       whitelist.delete(ip);
+//       whitelistExpire.delete(ip);
+//     }
+//   }
+// }, 10 * 60 * 1000);
+// ──────────────────────────────────────
+
+// ───────────── 鉴权中间件 ─────────────
 app.use((req, res, next) => {
+  const ip =
+    req.headers["x-forwarded-for"]?.split(",").shift()?.trim() || req.ip;
+
+  // 已在白名单：直接放行
+  if (whitelist.has(ip)) return next();
+
+  // 检查 Authorization 头
   const token = req.headers.authorization;
   const expected = `Bearer ${process.env.API_TOKEN}`;
   if (token !== expected) {
@@ -21,11 +55,14 @@ app.use((req, res, next) => {
       .status(403)
       .json({ error: "Forbidden: Invalid or missing token" });
   }
+
+  // ✅ 首次通过：加入白名单
+  addToWhitelist(ip);
   next();
 });
+// ──────────────────────────────────────
 
 // ───────────── 业务路由 ─────────────
-
 // GET /words  或 /words?q=abc
 app.get("/words", async (req, res) => {
   const kw = req.query.q;
@@ -79,7 +116,7 @@ app.delete("/words/:id", async (req, res) => {
   }
 });
 
-// DELETE /words    —— 清空整个词库
+// DELETE /words —— 清空整个词库
 app.delete("/words", async (_req, res) => {
   try {
     await pool.query("TRUNCATE TABLE words RESTART IDENTITY");
@@ -93,7 +130,7 @@ app.delete("/words", async (_req, res) => {
 // POST /words/import   (multipart/form-data 里携带 file 字段)
 app.post("/words/import", async (req, res) => {
   try {
-    const file = req.files?.file; // 用 express-fileupload 或 multer
+    const file = req.files?.file; // 需配合 express-fileupload / multer
     if (!file) return res.status(400).send("no file");
 
     const rows = [];
@@ -118,6 +155,7 @@ app.post("/words/import", async (req, res) => {
     } finally {
       client.release();
     }
+
     res.json({ imported: rows.length });
   } catch (e) {
     console.error(e);
@@ -126,4 +164,6 @@ app.post("/words/import", async (req, res) => {
 });
 
 // ───────────── 启动 ─────────────
-app.listen(port, () => console.log(`👍 API running on :${port}`));
+app.listen(port, () => {
+  console.log(`👍 API running on :${port}`);
+});
