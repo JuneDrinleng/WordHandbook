@@ -162,6 +162,28 @@ app.post("/words/import", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+// —— 新增：GET /bills 查询电费记录 ——
+app.get("/bills", async (req, res) => {
+  try {
+    // 支持 ?limit=10 和 ?since=2025-07-03%2000:00:00
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const since = req.query.since || "1970-01-01 00:00:00";
+
+    const { rows } = await pool.query(
+      `SELECT record_time, fee_amount
+         FROM electricity_bill
+        WHERE record_time >= $1
+        ORDER BY record_time DESC
+        LIMIT $2`,
+      [since, limit]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("查询电费失败", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ───────────── 启动 ─────────────
 app.listen(port, () => {

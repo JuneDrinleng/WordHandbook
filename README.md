@@ -59,6 +59,8 @@ curl http://localhost:3000/words
 DATABASE_URL=postgresql://worduser:YOURPASSWORD@localhost:5432/wordbook
 PORT=3000
 API_TOKEN=your-secret-token
+ELEC_USER=你的清华学号
+ELEC_PASS=你的密码
 ~~~
 
 然后再配置nginx和cf的代理即可
