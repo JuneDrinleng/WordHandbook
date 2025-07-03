@@ -28,7 +28,14 @@ if not all([DATABASE_URL, ELEC_USER, ELEC_PASS]):
     print("ERROR: 请在 .env 中配置 DATABASE_URL, ELEC_USER, ELEC_PASS")
     sys.exit(1)
 
-
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/91.0.4472.124 Safari/537.36"
+    ),
+    "Referer": "https://m.myhome.tsinghua.edu.cn/weixin/index.aspx"
+}
 def write_to_db(record_time: str, fee_amount: float):
     """写入电费记录；若无权限创建表，忽略创建步骤"""
     conn = psycopg2.connect(DATABASE_URL)
@@ -78,6 +85,7 @@ def get_electricty(name, password):
         pass
 
     # 建立会话
+    session.headers.update(HEADERS)
     session.get('https://m.myhome.tsinghua.edu.cn/weixin/index.aspx')
     res = session.get(login_url)
     res.encoding = 'gbk'
@@ -95,7 +103,7 @@ def get_electricty(name, password):
     data['weixin_user_authenticateCtrl1$txtUserName'] = name
     data['weixin_user_authenticateCtrl1$txtPassword'] = password
     data['weixin_user_authenticateCtrl1$btnLogin'] = '%B5%C7%C2%BC'
-    session.post(login_url, data=data)
+    session.post(login_url, data=data,headers=HEADERS)
 
     # 保存 cookie
     try:
@@ -103,10 +111,10 @@ def get_electricty(name, password):
             pickle.dump(session.cookies, f)
     except Exception:
         pass
-
+    time.sleep(5)  # 等待1秒，确保会话稳定
     # 获取电费
     bill_url = 'https://m.myhome.tsinghua.edu.cn/weixin/weixin_student_electricity_search.aspx'
-    res = session.get(bill_url)
+    res = session.get(bill_url, headers=HEADERS)
     res.encoding = 'gbk'
     soup = BeautifulSoup(res.text, 'html.parser')
     elem = soup.find('span', id='weixin_student_electricity_searchCtrl1_lblele')
