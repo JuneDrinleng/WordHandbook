@@ -8,13 +8,13 @@
 
 ## 2 Overview
 
-快速检索的单词本，方便的实现添加生词，可以直接以csv格式导入和导出。
+快速检索的单词本，方便的实现添加生词，可以直接以 csv 格式导入和导出。
 
 <img src="./README.assets/image-20250701134726240.png" alt="image-20250701134726240" style="zoom:50%;" />
 
 # 3 Server setting
 
-~~~
+```
 apt update
 apt install -y postgresql-17 postgresql-client-17
 systemctl enable --now postgresql
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS words (
 );
 SQL
 
-node src/index.js    
+node src/index.js
 pm2 start src/index.js --name wordbook-api --env production
 pm2 save
 pm2 list
@@ -51,19 +51,20 @@ ls
 cd wordbook-api
 ls -a
 curl -X POST http://localhost:3000/words      -H 'Content-Type: application/json'      -d '{"en":"hello","zh":"你好"}'
-curl http://localhost:3000/words 
-~~~
+curl http://localhost:3000/words
+```
 
 请在 `/srv/wordbook-api` 下创建 `.env` 文件，内容如下：
-~~~
+
+```
 DATABASE_URL=postgresql://worduser:YOURPASSWORD@localhost:5432/wordbook
 PORT=3000
 API_TOKEN=your-secret-token
 ELEC_USER=你的清华学号
 ELEC_PASS=你的密码
-~~~
+```
 
-然后再配置nginx和cf的代理即可
+然后再配置 nginx 和 cf 的代理即可
 
 ## 4 Project Structure
 
@@ -78,4 +79,10 @@ wordbook-app/
 ├── db.js # 数据库封装
 ├── package.json
 └── assets/
+```
+
+## 5 build
+
+```
+npm run dist
 ```
