@@ -1,0 +1,136 @@
+/* ========= frameless.css ========= */
+
+/* 主题色 & 通用变量（按需删改） */
+:root {
+  --accent: #e63946; /* 主色：红 */
+  --accent-dark: #c92f39; /* 深红 / hover */
+  --accent-light: #fdebec; /* 浅红 / 聚焦阴影 */
+  --radius: 10px;
+  --transition: 0.2s ease;
+}
+
+/* 基础重置 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  /* 预留标题栏高度，内容不被遮住 */
+  padding-top: 36px;
+  background: #fafafa;
+  color: #333;
+}
+
+/* ========== 自定义标题栏 ========== */
+.titlebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 36px;
+  display: flex;
+  justify-content: flex-end; /* 右对齐控制钮 */
+  align-items: center;
+  padding: 0 12px;
+  -webkit-app-region: drag; /* 整条可拖动 */
+  background: transparent; /* 若有渐变背景可透出 */
+  z-index: 1000;
+}
+
+/* ---------- 三键按钮 ---------- */
+.window-controls {
+  display: flex;
+  gap: 10px;
+}
+
+/* 每个彩色圆点 */
+.window-controls .btn {
+  -webkit-app-region: no-drag; /* 按钮可点 */
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  transition: transform var(--transition);
+}
+.btn.min {
+  background: #ffbd2e;
+} /* 黄 */
+.btn.max {
+  background: #28c940;
+} /* 绿 */
+.btn.close {
+  background: #ff5f57;
+} /* 红 */
+
+.window-controls .btn:hover {
+  transform: scale(1.1);
+}
+
+/* “× / – / +” 线条（Hover 时出现） */
+.window-controls .btn::before,
+.window-controls .btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 1.5px;
+  background: #fff;
+  border-radius: 1px;
+  transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+.window-controls .btn:hover::before,
+.window-controls .btn:hover::after {
+  opacity: 1;
+}
+
+.btn.close::before {
+  --r: 45deg;
+}
+.btn.close::after {
+  --r: -45deg;
+}
+
+.btn.min::after {
+  --r: 0deg;
+} /* 水平线 */
+.btn.min::before {
+  display: none;
+}
+
+.btn.max::before {
+  --r: 0deg;
+} /* 竖线 */
+.btn.max::after {
+  --r: 90deg;
+} /* 横线 */
+
+/* ========== 可选：置顶（Pin）按钮 ========== */
+/* 如无需求可删除这一段 */
+.pin-toggle {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: color 0.3s ease;
+}
+.pin-toggle i {
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.pin-toggle.pinned i {
+  transform: rotate(-45deg);
+  color: var(--accent);
+}

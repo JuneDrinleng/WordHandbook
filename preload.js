@@ -80,4 +80,14 @@ contextBridge.exposeInMainWorld("api", {
       if (!r.ok) throw new Error(r.statusText);
     });
   },
+  getBills: () => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/bills`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).then((r) => {
+      if (!r.ok) throw new Error(r.statusText);
+      return r.json();
+    });
+  },
 });

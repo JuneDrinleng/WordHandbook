@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>电量 Dashboard</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="stylesheet" href="./dashboard.css" />
+    <link rel="stylesheet" href="frameless.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+  </head>
+
+  <body>
+    <div class="titlebar">
+      <div class="pin-toggle" onclick="togglePin()" title="置顶切换">
+        <i id="pin-icon" class="fa-solid fa-thumbtack"></i>
+      </div>
+      <div class="window-controls">
+        <div
+          class="btn min"
+          onclick="window.api.winControl('minimize')"
+          data-tooltip="最小化"
+        ></div>
+        <div
+          class="btn max"
+          onclick="window.api.winControl('maximize')"
+          data-tooltip="最大化"
+        ></div>
+        <div
+          class="btn close"
+          onclick="window.api.winControl('close')"
+          data-tooltip="关闭"
+        ></div>
+      </div>
+    </div>
+    <!-- 整个窗口 = 800×450，深灰背景由 CSS 控制 -->
+    <main class="canvas16x9">
+      <h2 class="card-title">电量统计</h2>
+
+      <section class="card">
+        <!-- 环形仪表盘 -->
+        <div class="sub-card current-card">
+          <div class="ring">
+            <div class="ring-arc"></div>
+            <div class="current-power">
+              <span id="powerValue">--</span>
+              <span class="unit">kWh</span>
+            </div>
+          </div>
+          <div id="currentTime">--</div>
+        </div>
+
+        <!-- 折线图，点随值变色 -->
+        <div class="sub-card chart-card">
+          <canvas id="powerChart"></canvas>
+        </div>
+      </section>
+    </main>
+
+    <script src="./dashboard.js" defer></script>
+    <script src="./pin.js" defer></script>
+  </body>
+</html>

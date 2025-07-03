@@ -1,0 +1,191 @@
+/* =========================================================
+   dashboard.css  –  Drag-safe layout (2025-07-03)
+   ========================================================= */
+
+/* ===== 0. 主题变量 ===== */
+:root {
+  --grad-from: #e8f2ff;
+  --grad-to: #f4f1ff;
+
+  --glass: rgba(255, 255, 255, 0.2);
+  --glass-blur: 14px;
+
+  --txt-main: #1f2028;
+  --txt-sub: #6e7689;
+  --txt-accent: #ffb400;
+
+  --ring: var(--txt-accent); /* JS 会根据电量实时覆写 */
+}
+
+/* ===== 1. 全局基线 ===== */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Poppins:wght@600;700&display=swap");
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  color: var(--txt-main);
+
+  background: linear-gradient(135deg, var(--grad-from) 0%, var(--grad-to) 100%);
+  -webkit-user-select: none;
+  user-select: none;
+}
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* ===== 2. 透明拖层：覆盖标题栏以下区域 ===== */
+body::before {
+  content: "";
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 36px; /* 避开 titlebar */
+  bottom: 0;
+  z-index: -1;
+  -webkit-app-region: drag; /* 负责拖动 */
+  pointer-events: none; /* 不截获点击 */
+}
+
+/* ===== 3. 自定义标题栏（保持在 frameless.css 中） ===== */
+/* 无需重复定义；只确保按钮自身 no-drag */
+
+/* ===== 4. 主画布（取消 drag，挪到底部） ===== */
+.canvas16x9 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 1px; /* 让出标题栏高度 */
+  bottom: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  /* aspect-ratio: 16/9; */
+  max-width: 100vw;
+  max-height: calc(100vh - 36px);
+  background: transparent;
+
+  /* ★ 不再 drag，避免影响标题栏 */
+}
+
+/* ===== 5. 标题 ===== */
+.card-title {
+  margin: 38px 0 22px;
+  font: 600 24px/1 "Poppins", sans-serif;
+  letter-spacing: 0.04em;
+  color: var(--txt-accent);
+  text-shadow: 0 1px 2px #fff;
+  -webkit-app-region: no-drag;
+}
+
+/* ===== 6. 毛玻璃父卡片 ===== */
+.card {
+  width: min(650px, 90%);
+  height: min(310px, 70%);
+  display: grid;
+  grid-template-columns: minmax(0, 250px) minmax(0, 1fr);
+  gap: 32px;
+
+  padding: 36px 44px;
+  border-radius: 24px;
+  background: var(--glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+
+  -webkit-app-region: no-drag;
+  overflow: hidden;
+}
+
+/* ===== 7. 子卡片布局 ===== */
+.sub-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+/* ===== 8. 环形仪表盘 ===== */
+.ring {
+  position: relative;
+  width: 160px;
+  height: 160px;
+}
+.ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 10px solid rgba(0, 0, 0, 0.06);
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.ring-arc {
+  position: absolute;
+  inset: 0;
+  border: 10px solid transparent;
+  border-top-color: var(--ring);
+  border-right-color: var(--ring);
+  border-radius: 50%;
+  animation: spin 1.8s linear infinite;
+}
+.current-power {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font: 700 34px/1 "Inter", sans-serif;
+  color: var(--txt-main);
+}
+.unit {
+  font: 600 15px/1 "Inter", sans-serif;
+  margin-top: 4px;
+  color: var(--txt-sub);
+}
+#currentTime {
+  margin-top: 14px;
+  font: 400 13px/1 "Inter", sans-serif;
+  color: var(--txt-sub);
+}
+
+/* ===== 9. 折线图容器 ===== */
+.chart-card {
+  width: 100%;
+  height: 100%;
+  padding: 4px 6px 0;
+}
+.chart-card canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ===== 10. 交互元素强制 no-drag ===== */
+.card,
+.sub-card,
+canvas,
+button,
+input,
+select,
+a {
+  -webkit-app-region: no-drag;
+}
+/* 让标题 + 卡片在交叉轴上都居中 */
+.card-title,
+.card {
+  align-self: center; /* ← 关键：把自己放到列的正中 */
+  margin-left: auto; /* 兼容非 Flex 布局时仍可水平居中 */
+  margin-right: auto;
+}

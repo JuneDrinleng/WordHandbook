@@ -149,6 +149,7 @@ function createWindows() {
   mainWindow = new BrowserWindow({
     width: scale * 9,
     height: scale * 16,
+    show: false,
     frame: false,
     resizable: false, // 防止用户拖动改变窗口大小
     icon: path.join(__dirname, "favicon.ico"),
@@ -167,6 +168,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     { label: "📕单词本", click: () => mainWindow?.show() },
+    { label: "⚡ 电费记录", click: () => createBillWindow() },
     { label: "⏏️退出", click: app.quit },
   ]);
 
@@ -177,6 +179,62 @@ function createTray() {
     if (mainWindow) {
       mainWindow.show();
     }
+  });
+}
+// —— 新增：创建电费窗口 ——
+let billWindow = null;
+function createBillWindow() {
+  if (billWindow) {
+    billWindow.show();
+    return;
+  }
+  billWindow = new BrowserWindow({
+    width: 160 * 5,
+    height: 90 * 5,
+    title: "电费记录",
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+    frame: false, // 彻底去掉系统边框
+    resizable: false, // 防止用户拖动改变窗口大小
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "favicon.ico"),
+  });
+
+  // 加载电费页面
+  billWindow.loadFile(path.join(__dirname, "renderer/dashboard.html"));
+
+  // bills.html 加载完毕后，同步 mainWindow 的 localStorage 到 billWindow
+  billWindow.webContents.on("did-finish-load", async () => {
+    try {
+      // 从主窗口拿配置
+      const apiBase = await mainWindow.webContents.executeJavaScript(
+        "localStorage.getItem('apiBase')"
+      );
+      const apiToken = await mainWindow.webContents.executeJavaScript(
+        "localStorage.getItem('apiToken')"
+      );
+
+      // 注入到电费窗口
+      if (apiBase) {
+        await billWindow.webContents.executeJavaScript(
+          `localStorage.setItem('apiBase', ${JSON.stringify(apiBase)});`
+        );
+      }
+      if (apiToken) {
+        await billWindow.webContents.executeJavaScript(
+          `localStorage.setItem('apiToken', ${JSON.stringify(apiToken)});`
+        );
+      }
+    } catch (e) {
+      console.error("同步 localStorage 失败：", e);
+    }
+  });
+
+  billWindow.on("closed", () => {
+    billWindow = null;
   });
 }
 /*------ app part --------*/
