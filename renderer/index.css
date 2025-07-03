@@ -368,13 +368,23 @@ ul {
    Bottom Navigation
    ===================== */
 .bottom-nav {
+  position: fixed; /* 固定在视口 */
+  bottom: 0; /* 底部对齐 */
+  left: 0; /* 左侧对齐 */
+  width: 100%; /* 横向铺满 */
   height: 64px;
   background: transparent;
   border-top: 1px solid transparent;
   display: flex;
   justify-content: space-around;
   align-items: center;
+  z-index: 100; /* 确保覆盖内容 */
 }
+body {
+  /* 给内容区留出导航高度的内边距 */
+  padding-bottom: 64px;
+}
+
 .bottom-nav button {
   background: none;
   border: none;

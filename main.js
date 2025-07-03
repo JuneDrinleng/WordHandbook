@@ -166,8 +166,8 @@ function createTray() {
   tray = new Tray(iconPath);
 
   const contextMenu = Menu.buildFromTemplate([
-    { label: "显示主窗口", click: () => mainWindow?.show() },
-    { label: "退出", click: app.quit },
+    { label: "📕单词本", click: () => mainWindow?.show() },
+    { label: "⏏️退出", click: app.quit },
   ]);
 
   tray.setToolTip("生词本");
