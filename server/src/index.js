@@ -184,6 +184,28 @@ app.get("/bills", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// POST /bills   { "record_time": "2025-07-04 12:00:00", "fee_amount": 23.45 }
+app.post("/bills", async (req, res) => {
+  const { record_time, fee_amount } = req.body;
+
+  // —— 简单参数校验 ——
+  if (!record_time || fee_amount === undefined) {
+    return res.status(400).json({ error: "missing record_time or fee_amount" });
+  }
+  // 也可加更严格的日期 / 数字格式校验
+
+  try {
+    await pool.query(
+      `INSERT INTO electricity_bill (record_time, fee_amount)
+       VALUES ($1, $2)`,
+      [record_time, fee_amount]
+    );
+    res.sendStatus(201); // Created
+  } catch (e) {
+    console.error("写入电费失败", e);
+    res.status(500).json({ error: e.message });
+  }
+});
 
 // ───────────── 启动 ─────────────
 app.listen(port, () => {

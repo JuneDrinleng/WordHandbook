@@ -139,5 +139,7 @@ if __name__ == '__main__':
             print(f"{time_now}[info]: 电费获取成功")
         except Exception as e:
             print(f"{time_now}[error]: {e}")
-            sys.exit(1)
-        time.sleep(60 * 60)  # 每小时执行一次
+        try:
+            time.sleep(3600)
+        except:
+            pass
