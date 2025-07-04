@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>设置</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 18px;
+      }
+      label {
+        display: block;
+        margin-top: 14px;
+      }
+      input {
+        width: 100%;
+        padding: 6px 8px;
+      }
+      button {
+        margin-top: 20px;
+        padding: 6px 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>全局设置</h2>
+
+    <label
+      >API Base URL
+      <input id="apiBase" placeholder="https://your.api" />
+    </label>
+
+    <label
+      >API Token
+      <input id="apiToken" placeholder="可留空" />
+    </label>
+
+    <label
+      >电费用户名
+      <input id="elecUser" />
+    </label>
+
+    <label
+      >电费密码
+      <input id="elecPass" type="password" />
+    </label>
+
+    <button id="saveBtn">💾 保存</button>
+
+    <script>
+      // 初始化
+      (async () => {
+        const cfg = await window.settings.getAll();
+        for (const [k, v] of Object.entries(cfg)) {
+          const input = document.getElementById(k);
+          if (input && v) input.value = v;
+        }
+      })();
+
+      // 保存
+      document.getElementById("saveBtn").onclick = async () => {
+        const data = {
+          apiBase: apiBase.value.trim(),
+          apiToken: apiToken.value.trim(),
+          elecUser: elecUser.value.trim(),
+          elecPass: elecPass.value.trim(),
+        };
+
+        // 1️⃣ 写入本地
+        await window.settings.setAll(data);
+
+        // 2️⃣ 主进程也同步一下 Base URL，保持与首页一致
+        await window.api.setApiBase(data.apiBase);
+
+        // 3️⃣ 立即做一次 /words 探活
+        try {
+          await window.api.getWords(); // ← 真请求
+          alert("✅ 配置已保存，API 连接正常！");
+        } catch (e) {
+          alert("⚠️ 配置已保存，但 API 无法连接：\n" + e.message);
+        }
+      };
+    </script>
+  </body>
+</html>

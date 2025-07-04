@@ -9,8 +9,9 @@ const {
 } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const { getElectricity } = require("./models/getElectricity.js");
 let apiBase = null;
-
+let settingsWindow = null; // ← 新增这一行
 let tray = null;
 /*------ ipc part --------*/
 ipcMain.on("win-control", (event, action) => {
@@ -143,6 +144,15 @@ ipcMain.handle("import-csv", async () => {
   return "导入成功";
 });
 
+ipcMain.handle("refresh-electricity", async (_evt, cfg) => {
+  try {
+    const data = await getElectricity(cfg); // ← cfg 内含账号/API/Token
+    return { ok: true, data };
+  } catch (e) {
+    console.error("[抓电费失败]", e);
+    return { ok: false, error: e.message };
+  }
+});
 /*------ function part --------*/
 function createWindows() {
   let scale = 40;
@@ -169,6 +179,7 @@ function createTray() {
   const contextMenu = Menu.buildFromTemplate([
     { label: "📕单词本", click: () => mainWindow?.show() },
     { label: "⚡ 电费记录", click: () => createBillWindow() },
+    { label: "⚙️ 设置", click: () => createSettingsWindow() },
     { label: "⏏️退出", click: app.quit },
   ]);
 
@@ -181,6 +192,49 @@ function createTray() {
     }
   });
 }
+//*———————————————————— 设置页面————————————*//
+function createSettingsWindow() {
+  if (settingsWindow) {
+    settingsWindow.show();
+    return;
+  }
+
+  settingsWindow = new BrowserWindow({
+    width: 460,
+    height: 340,
+    title: "设置",
+    resizable: false,
+    frame: false,
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "favicon.ico"),
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  settingsWindow.loadFile(path.join(__dirname, "renderer/settings.html"));
+
+  // 加载完成后，把主窗口里已有的 localStorage 同步过去
+  settingsWindow.webContents.on("did-finish-load", async () => {
+    const keys = ["apiBase", "apiToken", "elecUser", "elecPass"];
+    for (const k of keys) {
+      const v = await mainWindow.webContents.executeJavaScript(
+        `localStorage.getItem(${JSON.stringify(k)})`
+      );
+      if (v !== null) {
+        await settingsWindow.webContents.executeJavaScript(
+          `localStorage.setItem(${JSON.stringify(k)}, ${JSON.stringify(v)});`
+        );
+      }
+    }
+  });
+
+  settingsWindow.on("closed", () => {
+    settingsWindow = null;
+  });
+}
 // —— 新增：创建电费窗口 ——
 let billWindow = null;
 function createBillWindow() {
@@ -189,8 +243,8 @@ function createBillWindow() {
     return;
   }
   billWindow = new BrowserWindow({
-    width: 160 * 5,
-    height: 90 * 5,
+    width: 800,
+    height: 600,
     title: "电费记录",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),

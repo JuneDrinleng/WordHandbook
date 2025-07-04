@@ -52,6 +52,10 @@
             </div>
           </div>
           <div id="currentTime">--</div>
+          <button id="btn-refresh" class="sync-btn" title="同步">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>电量数据刷新</span>
+          </button>
         </div>
 
         <!-- 折线图，点随值变色 -->
@@ -60,6 +64,31 @@
         </div>
       </section>
     </main>
+    <!-- 新增：手动录入电量
+    <section class="card">
+      <h3 style="margin: 4px 0 12px"><i class="fa fa-pen"></i> 手动录入</h3>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap">
+        <input
+          id="inp-time"
+          type="datetime-local"
+          style="flex: 1 1 180px"
+          required
+        />
+        <input
+          id="inp-fee"
+          type="number"
+          step="0.01"
+          placeholder="电费 / kWh"
+          style="flex: 1 1 120px"
+          required
+        />
+        <button id="btn-save-bill" style="flex: 0 0 80px">保存</button>
+      </div>
+      <p
+        id="bill-msg"
+        style="font-size: 13px; color: #777; margin-top: 6px"
+      ></p>
+    </section> -->
 
     <script src="./dashboard.js" defer></script>
     <script src="./pin.js" defer></script>

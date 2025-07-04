@@ -90,4 +90,43 @@ contextBridge.exposeInMainWorld("api", {
       return r.json();
     });
   },
+  addBill: async (bill) => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+
+    const res = await fetch(`${api}/bills`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(bill),
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+  },
+  refreshElectricity: () => {
+    const elecUser = localStorage.getItem("elecUser") || "";
+    const elecPass = localStorage.getItem("elecPass") || "";
+    const apiBase = localStorage.getItem("apiBase") || "";
+    const apiToken = localStorage.getItem("apiToken") || "";
+
+    return ipcRenderer.invoke("refresh-electricity", {
+      elecUser,
+      elecPass,
+      apiBase,
+      apiToken,
+    });
+  },
+});
+
+contextBridge.exposeInMainWorld("settings", {
+  get: (k) => localStorage.getItem(k),
+  set: (k, v) => localStorage.setItem(k, v),
+  getAll: () => {
+    const keys = ["apiBase", "apiToken", "elecUser", "elecPass"];
+    return keys.reduce((o, k) => ({ ...o, [k]: localStorage.getItem(k) }), {});
+  },
+  setAll: (obj) =>
+    Object.entries(obj).forEach(([k, v]) => localStorage.setItem(k, v)),
 });
