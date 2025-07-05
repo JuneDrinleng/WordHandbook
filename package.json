@@ -19,7 +19,8 @@
       "renderer/**/*",
       "assets/**/*",
       "package.json",
-      "favicon.ico"
+      "favicon.ico",
+      "models/**/*"
     ],
     "win": {
       "target": "nsis",
