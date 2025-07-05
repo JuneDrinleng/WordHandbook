@@ -2,84 +2,179 @@
 <html lang="zh">
   <head>
     <meta charset="UTF-8" />
-    <title>设置</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        margin: 18px;
-      }
-      label {
-        display: block;
-        margin-top: 14px;
-      }
-      input {
-        width: 100%;
-        padding: 6px 8px;
-      }
-      button {
-        margin-top: 20px;
-        padding: 6px 24px;
-      }
-    </style>
+    <title>设置页</title>
+    <!-- Font Awesome 图标 -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./frameless.css" />
+    <link rel="stylesheet" href="./settings.css" />
   </head>
   <body>
-    <h2>全局设置</h2>
+    <div class="titlebar">
+      <div class="pin-toggle" onclick="togglePin()" title="置顶切换">
+        <i id="pin-icon" class="fa-solid fa-thumbtack"></i>
+      </div>
+      <div class="window-controls">
+        <div
+          class="btn min"
+          onclick="window.api.winControl('minimize')"
+          data-tooltip="最小化"
+        ></div>
+        <div
+          class="btn max"
+          onclick="window.api.winControl('maximize')"
+          data-tooltip="最大化"
+        ></div>
+        <div
+          class="btn close"
+          onclick="window.api.winControl('close')"
+          data-tooltip="关闭"
+        ></div>
+      </div>
+    </div>
+    <div class="parent-card">
+      <h1 class="page-title">设置页</h1>
 
-    <label
-      >API Base URL
-      <input id="apiBase" placeholder="https://your.api" />
-    </label>
+      <!-- API 设置卡片 -->
+      <div class="card" id="apiCard">
+        <h3><i class="fa-solid fa-plug"></i> API 设置</h3>
 
-    <label
-      >API Token
-      <input id="apiToken" placeholder="可留空" />
-    </label>
+        <div class="row">
+          <label for="apiBase">API Base URL</label>
+          <input id="apiBase" placeholder="https://your.api" />
+          <button id="saveApiBaseBtn">
+            <i class="fa-solid fa-floppy-disk"></i> 保存
+          </button>
+        </div>
 
-    <label
-      >电费用户名
-      <input id="elecUser" />
-    </label>
+        <div class="row">
+          <label for="apiToken">API Token</label>
+          <input id="apiToken" placeholder="可留空" />
+          <button id="testApiBtn">
+            <i class="fa-solid fa-floppy-disk"></i> 保存
+          </button>
+        </div>
+      </div>
 
-    <label
-      >电费密码
-      <input id="elecPass" type="password" />
-    </label>
+      <!-- 清华家园网账号卡片 -->
+      <div class="card" id="elecCard">
+        <h3><i class="fa-solid fa-house-circle-check"></i> 清华家园网账户</h3>
 
-    <button id="saveBtn">💾 保存</button>
+        <div class="row">
+          <label for="elecUser">电费用户名</label>
+          <input id="elecUser" />
+          <button id="saveElecUserBtn">
+            <i class="fa-solid fa-floppy-disk"></i> 保存
+          </button>
+        </div>
+
+        <div class="row">
+          <label for="elecPass">电费密码</label>
+          <input id="elecPass" type="password" />
+          <button id="testElecBtn">
+            <i class="fa-solid fa-floppy-disk"></i> 保存
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast 挂载点 -->
+    <div id="toast-container"></div>
 
     <script>
-      // 初始化
-      (async () => {
+      // ---------- Toast ----------
+      /**
+       * 轻量提示
+       * @param {string} msg
+       * @param {"success"|"error"} type
+       * @param {number} duration
+       */
+      function showToast(msg, type = "success", duration = 3000) {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+          <i class="fa-solid ${
+            type === "success" ? "fa-circle-check" : "fa-triangle-exclamation"
+          }"></i> ${msg}
+        `;
+        container.appendChild(toast);
+
+        // 触发动画
+        requestAnimationFrame(() => toast.classList.add("show"));
+
+        // 自动淡出并销毁
+        setTimeout(() => {
+          toast.classList.remove("show");
+          toast.addEventListener("transitionend", () => toast.remove());
+        }, duration);
+      }
+
+      // ---------- 工具函数 ----------
+      async function saveSetting(key, value) {
+        await window.settings.set(key, value);
+      }
+
+      async function loadAll() {
         const cfg = await window.settings.getAll();
         for (const [k, v] of Object.entries(cfg)) {
           const input = document.getElementById(k);
           if (input && v) input.value = v;
         }
-      })();
+      }
 
-      // 保存
-      document.getElementById("saveBtn").onclick = async () => {
-        const data = {
-          apiBase: apiBase.value.trim(),
-          apiToken: apiToken.value.trim(),
-          elecUser: elecUser.value.trim(),
-          elecPass: elecPass.value.trim(),
+      // ---------- 事件绑定 ----------
+      document.addEventListener("DOMContentLoaded", () => {
+        loadAll();
+
+        // 仅保存 base URL
+        saveApiBaseBtn.onclick = async () => {
+          const base = apiBase.value.trim();
+          await saveSetting("apiBase", base);
+          await window.api.setApiBase(base);
+          showToast("API Base URL 已保存");
         };
 
-        // 1️⃣ 写入本地
-        await window.settings.setAll(data);
+        // 保存 token 并验证 /words
+        testApiBtn.onclick = async () => {
+          const base = apiBase.value.trim();
+          const token = apiToken.value.trim();
+          await saveSetting("apiBase", base);
+          await saveSetting("apiToken", token);
+          await window.api.setApiBase(base);
 
-        // 2️⃣ 主进程也同步一下 Base URL，保持与首页一致
-        await window.api.setApiBase(data.apiBase);
+          try {
+            await window.api.getWords();
+            showToast("API Token 已保存，连接正常！");
+          } catch (e) {
+            showToast("Token 已保存，但连接失败：\n" + e.message, "error");
+          }
+        };
 
-        // 3️⃣ 立即做一次 /words 探活
-        try {
-          await window.api.getWords(); // ← 真请求
-          alert("✅ 配置已保存，API 连接正常！");
-        } catch (e) {
-          alert("⚠️ 配置已保存，但 API 无法连接：\n" + e.message);
-        }
-      };
+        // 仅保存电费用户名
+        saveElecUserBtn.onclick = async () => {
+          const user = elecUser.value.trim();
+          await saveSetting("elecUser", user);
+          showToast("用户名已保存");
+        };
+
+        // 保存电费密码并尝试刷新
+        testElecBtn.onclick = async () => {
+          const user = elecUser.value.trim();
+          const pass = elecPass.value.trim();
+          await saveSetting("elecUser", user);
+          await saveSetting("elecPass", pass);
+          try {
+            await window.api.refreshElectricity();
+            showToast("账户信息已保存，爬取成功！");
+          } catch (e) {
+            showToast("⚠️ 信息已保存，但爬取失败：\n" + e.message, "error");
+          }
+        };
+      });
     </script>
+    <script src="./pin.js" defer></script>
   </body>
 </html>

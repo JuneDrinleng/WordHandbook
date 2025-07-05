@@ -200,8 +200,8 @@ function createSettingsWindow() {
   }
 
   settingsWindow = new BrowserWindow({
-    width: 460,
-    height: 340,
+    width: 800,
+    height: 600,
     title: "设置",
     resizable: false,
     frame: false,
