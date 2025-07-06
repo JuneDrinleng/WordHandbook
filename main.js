@@ -292,19 +292,42 @@ function createBillWindow() {
   });
 }
 /*------ app part --------*/
-app.whenReady().then(() => {
-  createTray();
-  createWindows();
 
-  globalShortcut.register("CommandOrControl+Shift+W", () => {
-    mainWindow.show();
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+});
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  // 其他实例已经拿到锁，当前进程直接结束
+  app.quit();
+  process.exit(0);
+} else {
+  // 若有新的实例想启动，会触发 second-instance 事件
+  app.on("second-instance", () => {
+    // 这里 mainWindow 是你自己保存的主窗口对象
+    if (mainWindow) {
+      // 如果最小化了就恢复
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      // 把窗口摆到前台
+      mainWindow.focus();
+    }
+  });
+
+  // ↓↓↓ 把你原本的创建窗口逻辑放在这里
+  app.whenReady().then(() => {
+    createTray();
+    createWindows();
+
+    globalShortcut.register("CommandOrControl+Shift+W", () => {
+      mainWindow.show();
+    });
+
+    app.on("activate", () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindows();
+    });
   });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindows();
   });
-});
-
-app.on("will-quit", () => {
-  globalShortcut.unregisterAll();
-});
+}
