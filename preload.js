@@ -7,6 +7,21 @@ contextBridge.exposeInMainWorld("api", {
   exportCSV: () => ipcRenderer.invoke("export-csv"),
   setApiBase: (url) => ipcRenderer.invoke("set-api-base", url),
 
+  saveFocus: ({ start_time, end_time, task }) => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/focus`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ start_time, end_time, task }),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(await r.text());
+    });
+  },
+
   saveWord: (d) => {
     const api = localStorage.getItem("apiBase");
     const token = localStorage.getItem("apiToken");

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="utf-8" />
+    <title>专注计时</title>
+    <!-- 标题栏 & 图标所需样式 -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="./frameless.css" />
+    <style>
+      /* 页面主体样式 */
+      body {
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: #f8fafc;
+        font-family: system-ui;
+      }
+      /* 开始 / 结束按钮 */
+      #toggle {
+        padding: 16px 32px;
+        font-size: 1.1rem;
+        border: 0;
+        border-radius: 12px;
+        background: #6366f1;
+        color: #fff;
+        cursor: pointer;
+      }
+      #toggle:active {
+        transform: scale(0.97);
+      }
+      /* 任务输入对话框 */
+      dialog {
+        border: 0;
+        border-radius: 12px;
+        padding: 20px 24px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+      }
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.25);
+      }
+      input {
+        width: 220px;
+        padding: 6px 8px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+      }
+      menu {
+        margin-top: 16px;
+        text-align: right;
+      }
+      menu button {
+        margin-left: 8px;
+        padding: 6px 16px;
+        font-size: 0.95rem;
+        border: 0;
+        border-radius: 8px;
+      }
+      .primary {
+        background: #6366f1;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 自定义标题栏（与 settings 页面一致） -->
+    <div class="titlebar">
+      <div class="pin-toggle" onclick="togglePin()" title="置顶切换">
+        <i id="pin-icon" class="fa-solid fa-thumbtack"></i>
+      </div>
+      <div class="window-controls">
+        <div
+          class="btn min"
+          onclick="window.api.winControl('minimize')"
+          data-tooltip="最小化"
+        ></div>
+        <div
+          class="btn max"
+          onclick="window.api.winControl('maximize')"
+          data-tooltip="最大化"
+        ></div>
+        <div
+          class="btn close"
+          onclick="window.api.winControl('close')"
+          data-tooltip="关闭"
+        ></div>
+      </div>
+    </div>
+
+    <!-- 主按钮 -->
+    <button id="toggle">开始专注</button>
+
+    <!-- 任务输入弹窗 -->
+    <dialog id="taskDlg">
+      <form method="dialog">
+        <p style="margin-bottom: 8px">要专注的任务：</p>
+        <input id="taskInput" required />
+        <menu>
+          <button value="cancel">取消</button>
+          <button id="okBtn" value="default" class="primary">开始</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script>
+      const btn = document.getElementById("toggle");
+      const dlg = document.getElementById("taskDlg");
+      const taskInput = document.getElementById("taskInput");
+      const okBtn = document.getElementById("okBtn");
+
+      let startTime = null;
+      let task = "";
+
+      // 开始 / 结束   按钮
+      btn.onclick = () => {
+        if (!startTime) {
+          dlg.showModal();
+          taskInput.focus();
+          return;
+        }
+        endFocus();
+      };
+
+      // 点击“开始”按钮
+      okBtn.addEventListener("click", (e) => {
+        e.preventDefault(); // 阻止 <form> 默认关闭
+        task = taskInput.value.trim();
+        if (!task) return;
+        startTime = new Date();
+        btn.textContent = "结束专注";
+        dlg.close();
+        taskInput.value = "";
+      });
+
+      async function endFocus() {
+        const endTime = new Date();
+        try {
+          await window.api.saveFocus({
+            start_time: startTime.toISOString().slice(0, 19).replace("T", " "),
+            end_time: endTime.toISOString().slice(0, 19).replace("T", " "),
+            task,
+          });
+          alert(`已记录：${task}`);
+        } catch (e) {
+          alert("记录失败：" + e.message);
+        } finally {
+          startTime = null;
+          task = "";
+          btn.textContent = "开始专注";
+        }
+      }
+    </script>
+    <!-- 置顶脚本 & 标题栏逻辑 -->
+    <script src="./pin.js" defer></script>
+  </body>
+</html>

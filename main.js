@@ -178,6 +178,7 @@ function createTray() {
 
   const contextMenu = Menu.buildFromTemplate([
     { label: "📕单词本", click: () => mainWindow?.show() },
+    { label: "⏱️ 专注计时", click: () => createFocusWindow() },
     { label: "⚡ 电费记录", click: () => createBillWindow() },
     { label: "⚙️ 设置", click: () => createSettingsWindow() },
     { label: "⏏️退出", click: app.quit },
@@ -291,6 +292,53 @@ function createBillWindow() {
     billWindow = null;
   });
 }
+// —— 新增：创建专注计时窗口 ——
+let focusWindow = null;
+function createFocusWindow() {
+  if (focusWindow) {
+    focusWindow.show();
+    return;
+  }
+
+  focusWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    title: "专注计时",
+    resizable: false,
+    frame: false,
+    autoHideMenuBar: true,
+    icon: path.join(__dirname, "favicon.ico"),
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  // 加载页面
+  focusWindow.loadFile(path.join(__dirname, "renderer/focus.html"));
+
+  // 把 mainWindow 的 apiBase / apiToken 同步过来
+  focusWindow.webContents.on("did-finish-load", async () => {
+    const apiBase = await mainWindow.webContents.executeJavaScript(
+      "localStorage.getItem('apiBase')"
+    );
+    const apiToken = await mainWindow.webContents.executeJavaScript(
+      "localStorage.getItem('apiToken')"
+    );
+    if (apiBase)
+      await focusWindow.webContents.executeJavaScript(
+        `localStorage.setItem('apiBase', ${JSON.stringify(apiBase)});`
+      );
+    if (apiToken)
+      await focusWindow.webContents.executeJavaScript(
+        `localStorage.setItem('apiToken', ${JSON.stringify(apiToken)});`
+      );
+  });
+
+  focusWindow.on("closed", () => (focusWindow = null));
+}
+
 /*------ app part --------*/
 
 app.on("will-quit", () => {

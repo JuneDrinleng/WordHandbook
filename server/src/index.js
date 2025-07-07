@@ -207,6 +207,94 @@ app.post("/bills", async (req, res) => {
   }
 });
 
+//———————————————专注工具路由————————————————
+app.get("/focus", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 100;
+    const since = req.query.since || "1970-01-01 00:00:00";
+
+    const { rows } = await pool.query(
+      `SELECT id, start_time, end_time, task
+         FROM focus_session
+        WHERE start_time >= $1
+        ORDER BY start_time DESC
+        LIMIT $2`,
+      [since, limit]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("查询专注记录失败", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /focus  { "start_time": "...", "end_time": "...", "task": "..." }
+app.post("/focus", async (req, res) => {
+  const { start_time, end_time, task } = req.body;
+
+  // —— 简单参数校验 ——
+  if (!start_time || !end_time || !task) {
+    return res
+      .status(400)
+      .json({ error: "missing start_time, end_time or task" });
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO focus_session (start_time, end_time, task)
+       VALUES ($1, $2, $3)`,
+      [start_time, end_time, task]
+    );
+    res.sendStatus(201); // Created
+  } catch (e) {
+    console.error("写入专注记录失败", e);
+    res.status(500).json({ error: e.message });
+  }
+});
+// PUT /focus/:id  { "start_time": "...", "end_time": "...", "task": "..." }
+app.put("/focus/:id", async (req, res) => {
+  const { start_time, end_time, task } = req.body;
+  if (!start_time || !end_time || !task)
+    return res
+      .status(400)
+      .json({ error: "missing start_time, end_time or task" });
+
+  try {
+    await pool.query(
+      `UPDATE focus_session
+         SET start_time=$1,
+             end_time=$2,
+             task=$3
+       WHERE id=$4`,
+      [start_time, end_time, task, req.params.id]
+    );
+    res.sendStatus(204); // No Content
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// DELETE /focus/:id —— 删除单条记录
+app.delete("/focus/:id", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM focus_session WHERE id=$1", [req.params.id]);
+    res.sendStatus(204);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// DELETE /focus —— 清空整张表
+app.delete("/focus", async (_req, res) => {
+  try {
+    await pool.query("TRUNCATE TABLE focus_session RESTART IDENTITY");
+    res.sendStatus(204);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ───────────── 启动 ─────────────
 app.listen(port, () => {
   console.log(`👍 API running on :${port}`);
