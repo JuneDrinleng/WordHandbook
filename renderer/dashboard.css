@@ -14,6 +14,7 @@
   --radius-md: 20px;
   --shadow-lg: 0 10px 32px rgba(0, 0, 0, 0.14);
   --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.12);
+  --ring: var(--brand);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -53,7 +54,7 @@ main.canvas16x9 {
 .card-title {
   margin: 0;
   font: 700 30px/1 "Poppins", sans-serif;
-  color: var(--brand);
+  color: var(--ring);
   letter-spacing: 0.02em;
   -webkit-app-region: drag;
 }
@@ -98,8 +99,8 @@ main.canvas16x9 {
   position: absolute;
   inset: 0;
   border: 14px solid transparent;
-  border-top-color: var(--brand);
-  border-right-color: var(--brand);
+  border-top-color: var(--ring);
+  border-right-color: var(--ring);
   border-radius: 50%;
   animation: spin 2.2s linear infinite;
 }
@@ -134,7 +135,7 @@ main.canvas16x9 {
   height: 56px;
   border: 0;
   border-radius: var(--radius-md);
-  background: var(--brand);
+  background: var(--ring);
   color: #fff;
   display: flex;
   align-items: center;
