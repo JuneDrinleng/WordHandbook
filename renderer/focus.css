@@ -1,0 +1,236 @@
+/* =====================
+   Global Theme & Reset
+   ===================== */
+:root {
+  --accent: #e63946; /* 主色：红 */
+  --accent-dark: #c92f39; /* 按下 / hover 深红 */
+  --accent-light: #fdebec; /* 极浅红，用于焦点 */
+  --radius: 10px; /* 圆角统一 */
+  --shadow-s: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-m: 0 4px 10px rgba(0, 0, 0, 0.12);
+  --bg: #fafafa; /* 退底色，渐变做在 ::before */
+  --bg-card: #ffffff; /* 卡片背景 */
+  --text: #333;
+  --transition: 0.2s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* =============== 页面基础 + 渐变背景 =============== */
+body {
+  margin: 0;
+  padding-top: 36px; /* 顶部标题栏 */
+  padding-bottom: 64px; /* 底部导航 */
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: transparent; /* 让径向渐变透出 */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", sans-serif;
+  overflow: hidden;
+  color: var(--text);
+}
+
+/* 双层径向渐变覆盖全屏，包括 titlebar */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+      800px circle at 60% 15%,
+      rgba(230, 57, 70, 0.28) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      600px circle at 20% 85%,
+      rgba(255, 168, 176, 0.35) 0%,
+      transparent 65%
+    );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* =============== 单一按钮视图 =============== */
+#view-start {
+  justify-content: center;
+  align-items: center;
+}
+#toggle {
+  padding: 18px 40px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s ease, background var(--transition);
+}
+#toggle:hover {
+  background: var(--accent-dark);
+}
+#toggle:active {
+  transform: scale(0.96);
+}
+
+/* =============== 记录列表 =============== */
+#records-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 12px;
+}
+.record-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-s);
+  transition: box-shadow var(--transition);
+}
+.record-entry:hover {
+  box-shadow: var(--shadow-m);
+}
+
+/* =============== 底部导航 =============== */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  background: transparent;
+  border-top: 1px solid transparent;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+}
+.bottom-nav button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.bottom-nav i {
+  font-size: 24px;
+  color: #666;
+  transition: color var(--transition), transform var(--transition);
+}
+.bottom-nav button.active i,
+.bottom-nav button:hover i {
+  color: var(--accent);
+}
+
+/* =============== 视图容器 =============== */
+.view {
+  flex-grow: 1;
+  display: none;
+  flex-direction: column;
+  padding: 24px;
+  overflow-y: auto;
+  background: transparent; /* 透出渐变 */
+  animation: fade 0.3s ease;
+}
+.view.active {
+  display: flex;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* =============== dialog =============== */
+dialog {
+  border: none;
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+}
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.25);
+}
+dialog[open] {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+input {
+  width: 220px;
+  padding: 8px 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+menu {
+  margin-top: 16px;
+  text-align: right;
+}
+menu button {
+  margin-left: 10px;
+  padding: 6px 18px;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.primary {
+  background: var(--accent);
+  color: #fff;
+}
+.primary:hover {
+  background: var(--accent-dark);
+}
+
+/* =============== context menu for records =============== */
+#context-menu {
+  position: absolute;
+  display: none;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-m);
+  z-index: 9999;
+  overflow: hidden;
+}
+#context-menu button {
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background var(--transition);
+}
+#context-menu button:hover {
+  background: var(--accent-light);
+}
+
+/* =============== Scrollbar Styling =============== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(230, 57, 70, 0.25);
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(230, 57, 70, 0.55);
+}

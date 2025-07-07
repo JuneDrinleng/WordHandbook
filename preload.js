@@ -21,7 +21,44 @@ contextBridge.exposeInMainWorld("api", {
       if (!r.ok) throw new Error(await r.text());
     });
   },
+  getFocus: () => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/focus`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(await r.text());
+      return r.json();
+    });
+  },
 
+  // 更新单条记录
+  updateFocus: ({ id, start_time, end_time, task }) => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/focus/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ start_time, end_time, task }),
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(await r.text());
+    });
+  },
+
+  // 删除单条记录
+  deleteFocus: (id) => {
+    const api = localStorage.getItem("apiBase");
+    const token = localStorage.getItem("apiToken");
+    return fetch(`${api}/focus/${id}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).then(async (r) => {
+      if (!r.ok) throw new Error(await r.text());
+    });
+  },
   saveWord: (d) => {
     const api = localStorage.getItem("apiBase");
     const token = localStorage.getItem("apiToken");

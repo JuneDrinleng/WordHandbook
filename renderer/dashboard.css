@@ -4,7 +4,7 @@
 /* -------- 主题变量与暗黑模式（沿用原值） -------- */
 :root {
   --brand: #ffa700;
-  --bg-from: #f1f4ff 0%;
+  --bg-from: #f1f4ff 0%; /* ← 这两个现在不再用作背景，但保留给其他地方 */
   --bg-to: #fefafe 100%;
   --glass: hsla(0 0% 100%/0.35);
   --glass-blur: 26px;
@@ -33,14 +33,33 @@ body {
   width: 800px;
   height: 600px;
   margin: 0;
-  background: radial-gradient(circle at 25% 25%, var(--bg-from), var(--bg-to));
+  background: transparent; /* 背景交由 ::before 生成 */
   font-family: "Inter", system-ui, sans-serif;
   color: var(--txt-main);
   overflow: hidden;
 }
 
+/* ★ 新增：双层红色径向渐变背景（和首页一致） */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+      800px circle at 60% 15%,
+      rgba(230, 57, 70, 0.28) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      600px circle at 20% 85%,
+      rgba(255, 168, 176, 0.35) 0%,
+      transparent 65%
+    );
+  pointer-events: none;
+  z-index: -1;
+}
+
 main.canvas16x9 {
-  /* ← 改名保持兼容 */
+  /* ← 原名保持兼容 */
   width: 100%;
   height: 100%;
   display: flex;
