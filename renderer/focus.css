@@ -234,3 +234,7 @@ menu button {
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(230, 57, 70, 0.55);
 }
+#taskChart {
+  margin: 16px auto; /* 水平居中 */
+  max-width: 320px;
+}

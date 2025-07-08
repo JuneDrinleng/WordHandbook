@@ -17,8 +17,9 @@ function switchView(v) {
     .forEach((b, i) =>
       b.classList.toggle("active", i === { start: 0, stats: 1, records: 2 }[v])
     );
+
   if (v === "records") loadRecords();
-  if (v === "stats") calcTodayStats();
+  if (v === "stats") calcTodayStats(); // 每次进统计页都刷新饼图
 }
 
 /**************** 开始 / 结束专注 ****************/
@@ -49,12 +50,12 @@ async function endFocus() {
   const end = new Date();
   try {
     await window.api.saveFocus({
-      start_time: toLocalStr(start), // 本地时间串写库
+      start_time: toLocalStr(start),
       end_time: toLocalStr(end),
       task,
     });
     toast("已记录专注：" + task);
-    loadRecords();
+    await loadRecords(); // 保存完后立刻刷新列表 & 饼图
   } catch (err) {
     toast("记录失败：" + err.message);
   } finally {
@@ -76,42 +77,45 @@ async function loadRecords() {
     records = await window.api.getFocus();
     if (!records.length) {
       list.textContent = "暂无记录";
-      return;
-    }
-    list.innerHTML = "";
-    records.forEach((r) => {
-      const li = document.createElement("li");
-      li.className = "record-entry";
-      li.dataset.id = r.id;
+    } else {
+      list.innerHTML = "";
+      records.forEach((r) => {
+        const li = document.createElement("li");
+        li.className = "record-entry";
+        li.dataset.id = r.id;
 
-      const s = parseAny(r.start_time);
-      const e = parseAny(r.end_time);
-      const sTxt = s.toLocaleString(undefined, {
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      const eTxt = e.toLocaleTimeString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      li.innerHTML = `<span>${r.task}</span><span>${sTxt} → ${eTxt}</span>`;
-      li.oncontextmenu = (ev) => {
-        ev.preventDefault();
-        current = r;
-        Object.assign(menu.style, {
-          top: ev.pageY + "px",
-          left: ev.pageX + "px",
-          display: "block",
+        const s = parseAny(r.start_time);
+        const e = parseAny(r.end_time);
+        const sTxt = s.toLocaleString(undefined, {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
         });
-      };
-      list.appendChild(li);
-    });
+        const eTxt = e.toLocaleTimeString(undefined, {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        li.innerHTML = `<span>${r.task}</span><span>${sTxt} → ${eTxt}</span>`;
+        li.oncontextmenu = (ev) => {
+          ev.preventDefault();
+          current = r;
+          Object.assign(menu.style, {
+            top: ev.pageY + "px",
+            left: ev.pageX + "px",
+            display: "block",
+          });
+        };
+        list.appendChild(li);
+      });
+    }
   } catch (err) {
     list.textContent = "加载失败";
     console.error(err);
+  } finally {
+    // 无论成功失败都刷新统计，保证饼图同步
+    calcTodayStats();
   }
 }
 document.addEventListener("click", () => (menu.style.display = "none"));
@@ -122,7 +126,7 @@ async function deleteRecord() {
   try {
     await window.api.deleteFocus(current.id);
     toast("已删除");
-    loadRecords();
+    await loadRecords();
   } catch (e) {
     toast("删除失败：" + e.message);
   }
@@ -138,7 +142,7 @@ document.getElementById("saveEdit").onclick = async (e) => {
   try {
     await window.api.updateFocus({ ...current, task: newTask });
     toast("已更新");
-    loadRecords();
+    await loadRecords();
   } catch (err) {
     toast("更新失败：" + err.message);
   }
@@ -153,23 +157,67 @@ function editRecord() {
   }
 }
 
-/**************** 今日统计 ****************/
+/**************** 今日统计 + 饼图 ****************/
+let pieChart = null; // 保存 Chart.js 实例，切页可销毁
+
 function calcTodayStats() {
-  const today = new Date();
-  const mins = records.reduce(
-    (s, r) =>
-      parseAny(r.start_time).toDateString() === today.toDateString()
-        ? s + diffMins(r.start_time, r.end_time)
-        : s,
-    0
-  );
+  const todayStr = new Date().toDateString();
+
+  /* 1. 计算今日总分钟 & 按任务聚合 */
+  let totalMins = 0;
+  const taskMins = {};
+  records.forEach((r) => {
+    if (parseAny(r.start_time).toDateString() !== todayStr) return;
+    const mins = diffMins(r.start_time, r.end_time);
+    totalMins += mins;
+    taskMins[r.task] = (taskMins[r.task] || 0) + mins;
+  });
+
   document.getElementById(
     "today-stats"
-  ).textContent = `今天已专注 ${mins} 分钟`;
+  ).textContent = `今天已专注 ${totalMins} 分钟`;
+
+  /* 2. 绘制 / 更新饼图 */
+  const canvas = document.getElementById("taskChart");
+  if (!canvas) return; // DOM 尚未渲染
+  const ctx = canvas.getContext("2d");
+
+  // 清理旧图
+  if (pieChart) {
+    pieChart.destroy();
+    pieChart = null;
+  }
+
+  const labels = Object.keys(taskMins);
+  const data = Object.values(taskMins);
+
+  if (!data.length) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+
+  pieChart = new Chart(ctx, {
+    type: "pie",
+    data: {
+      labels,
+      datasets: [
+        {
+          data, // Chart.js v4+ 自动配色
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: { boxWidth: 14, padding: 10 },
+        },
+      },
+    },
+  });
 }
 
 /**************** 工具函数 ****************/
-/* Date → 本地串 "YYYY-MM-DD HH:mm:ss" */
 function toLocalStr(d) {
   const pad = (n) => String(n).padStart(2, "0");
   return (
@@ -178,9 +226,8 @@ function toLocalStr(d) {
   );
 }
 
-/* 兼容 ISO(带T/Z) & 本地串 */
 function parseAny(str) {
-  if (str.includes("T")) return new Date(str); // 旧记录 ISO
+  if (str.includes("T")) return new Date(str); // ISO
   const [d, t] = str.split(" ");
   const [y, m, day] = d.split("-").map(Number);
   const [hh, mm, ss] = t.split(":").map(Number);
