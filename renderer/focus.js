@@ -1,9 +1,3 @@
-/**************** 置顶逻辑 ****************/
-async function togglePin() {
-  const pinned = document.body.classList.toggle("pinned");
-  await window.api.setAlwaysOnTop(pinned);
-}
-
 /**************** 通用消息框 ****************/
 const msgDlg = document.getElementById("msgDlg");
 const msgTxt = document.getElementById("msgText");
