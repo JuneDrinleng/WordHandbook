@@ -301,8 +301,8 @@ function createFocusWindow() {
   }
 
   focusWindow = new BrowserWindow({
-    width: 400,
-    height: 300,
+    width: 360,
+    height: 640,
     title: "专注计时",
     resizable: false,
     frame: false,

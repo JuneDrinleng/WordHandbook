@@ -19,7 +19,7 @@ function switchView(v) {
     );
 
   if (v === "records") loadRecords();
-  if (v === "stats") calcTodayStats(); // 每次进统计页都刷新饼图
+  if (v === "stats") calcStats(currentScope); // 每次进入统计页刷新
 }
 
 /**************** 开始 / 结束专注 ****************/
@@ -55,7 +55,7 @@ async function endFocus() {
       task,
     });
     toast("已记录专注：" + task);
-    await loadRecords(); // 保存完后立刻刷新列表 & 饼图
+    await loadRecords(); // 保存后立即刷新
   } catch (err) {
     toast("记录失败：" + err.message);
   } finally {
@@ -114,8 +114,7 @@ async function loadRecords() {
     list.textContent = "加载失败";
     console.error(err);
   } finally {
-    // 无论成功失败都刷新统计，保证饼图同步
-    calcTodayStats();
+    calcStats(currentScope); // 任何变动都刷新统计
   }
 }
 document.addEventListener("click", () => (menu.style.display = "none"));
@@ -157,42 +156,87 @@ function editRecord() {
   }
 }
 
-/**************** 今日统计 + 饼图 ****************/
-let pieChart = null; // 保存 Chart.js 实例，切页可销毁
+/****************  颜色工具  ****************/
+function makePalette(n, baseHue = 350) {
+  const colors = [];
+  for (let i = 0; i < n; i++) {
+    const h = (baseHue + (360 / n) * i) % 360;
+    colors.push(`hsl(${h}deg 55% 75%)`);
+  }
+  return colors;
+}
 
-function calcTodayStats() {
-  const todayStr = new Date().toDateString();
+/**************** 统计（多粒度饼图） ****************/
+let pieChart = null;
+let currentScope = "week"; // 默认周视图
 
-  /* 1. 计算今日总分钟 & 按任务聚合 */
+function calcStats(scope = "week") {
+  currentScope = scope;
+
+  const now = new Date();
+  const todayStr = now.toDateString();
+
+  // 周一零点
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  monday.setHours(0, 0, 0, 0);
+
   let totalMins = 0;
   const taskMins = {};
+  const daysInRange = new Set();
+
   records.forEach((r) => {
-    if (parseAny(r.start_time).toDateString() !== todayStr) return;
+    const st = parseAny(r.start_time);
+
+    const within =
+      scope === "day"
+        ? st.toDateString() === todayStr
+        : scope === "week"
+        ? st >= monday
+        : scope === "month"
+        ? st.getFullYear() === now.getFullYear() &&
+          st.getMonth() === now.getMonth()
+        : true; // custom
+
+    if (!within) return;
+
     const mins = diffMins(r.start_time, r.end_time);
     totalMins += mins;
     taskMins[r.task] = (taskMins[r.task] || 0) + mins;
+    daysInRange.add(st.toDateString());
   });
 
-  document.getElementById(
-    "today-stats"
-  ).textContent = `今天已专注 ${totalMins} 分钟`;
+  /* ---- 更新标题日期范围 & 汇总行 ---- */
+  const fmt = (m) => (m >= 60 ? `${(m / 60) | 0}小时${m % 60}分` : `${m}分`);
 
-  /* 2. 绘制 / 更新饼图 */
-  const canvas = document.getElementById("taskChart");
-  if (!canvas) return; // DOM 尚未渲染
-  const ctx = canvas.getContext("2d");
+  const rangeTxt =
+    scope === "day"
+      ? now.toLocaleDateString()
+      : scope === "week"
+      ? `${monday.toLocaleDateString()} ~ ${now.toLocaleDateString()}`
+      : scope === "month"
+      ? now.toLocaleDateString().slice(0, 7)
+      : "";
 
-  // 清理旧图
-  if (pieChart) {
-    pieChart.destroy();
-    pieChart = null;
-  }
+  document.getElementById("date-range").textContent = rangeTxt;
 
-  const labels = Object.keys(taskMins);
+  const avg = daysInRange.size
+    ? fmt((totalMins / daysInRange.size) | 0)
+    : "0分";
+  document.getElementById("summary-line").textContent = `总计 ${fmt(
+    totalMins
+  )}  日均 ${avg}`;
+
+  /* ---- 饼图 ---- */
+  const labels = Object.entries(taskMins).map(([t, m]) => `${t}  ${fmt(m)}`);
   const data = Object.values(taskMins);
 
+  const ctx = document.getElementById("taskChart").getContext("2d");
+  if (pieChart) pieChart.destroy();
+
   if (!data.length) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    document.getElementById("chart-legend").innerHTML = "";
     return;
   }
 
@@ -202,20 +246,38 @@ function calcTodayStats() {
       labels,
       datasets: [
         {
-          data, // Chart.js v4+ 自动配色
+          data,
+          backgroundColor: makePalette(data.length),
+          borderColor: "#fff",
+          borderWidth: 2,
+          hoverOffset: 8,
         },
       ],
     },
-    options: {
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { boxWidth: 14, padding: 10 },
-        },
-      },
-    },
+    options: { plugins: { legend: { display: false } } },
   });
+
+  /* ---- 自定义图例 ---- */
+  const legendDom = document.getElementById("chart-legend");
+  const meta = pieChart.getDatasetMeta(0).data;
+  legendDom.innerHTML = data
+    .map(
+      (m, i) =>
+        `<li style="color:${meta[i].options.backgroundColor}">${
+          labels[i]
+        }&nbsp;&nbsp;${((m / totalMins) * 100).toFixed(1)}%</li>`
+    )
+    .join("");
 }
+
+/* Tabs 切换 */
+document.querySelectorAll(".scope-tabs .tab").forEach((btn) => {
+  btn.onclick = () => {
+    document.querySelector(".scope-tabs .active")?.classList.remove("active");
+    btn.classList.add("active");
+    calcStats(btn.dataset.scope);
+  };
+});
 
 /**************** 工具函数 ****************/
 function toLocalStr(d) {
@@ -225,7 +287,6 @@ function toLocalStr(d) {
     `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
   );
 }
-
 function parseAny(str) {
   if (str.includes("T")) return new Date(str); // ISO
   const [d, t] = str.split(" ");
@@ -236,4 +297,4 @@ function parseAny(str) {
 const diffMins = (s, e) => ((parseAny(e) - parseAny(s)) / 60000) | 0;
 
 /**************** 初始化 ****************/
-loadRecords();
+loadRecords().then(() => calcStats("week"));

@@ -28,21 +28,42 @@
     </div>
 
     <!-- ===== 视图区 ===== -->
+    <!-- ① 开始专注 -->
     <div id="view-start" class="view active">
       <button id="toggle">开始专注</button>
     </div>
 
+    <!-- ② 统计页（重构） -->
     <div id="view-stats" class="view">
-      <h2>今日专注统计</h2>
-      <p id="today-stats">今天已专注 0 分钟</p>
-      <canvas
-        id="taskChart"
-        width="320"
-        height="320"
-        style="max-width: 100%; margin-top: 16px"
-      ></canvas>
-    </div>
+      <h2>专注统计</h2>
+      <div class="stats-card">
+        <!-- 标题 + 日期范围 + 分享 -->
+        <h2 class="stats-title">
+          <span id="date-range"></span> <a id="shareBtn"></a>
+        </h2>
 
+        <!-- 时间粒度切换 -->
+        <div class="scope-tabs">
+          <button class="tab" data-scope="day">日</button>
+          <button class="tab active" data-scope="week">周</button>
+          <button class="tab" data-scope="month">月</button>
+          <!-- <button class="tab" data-scope="custom">自定义</button> -->
+        </div>
+
+        <!-- 饼图 -->
+        <canvas id="taskChart"></canvas>
+
+        <!-- 汇总行 -->
+        <p id="summary-line"></p>
+
+        <!-- 查看纵览按钮 -->
+        <!-- <button id="btn-week-view" class="ghost">查看一周纵览</button> -->
+
+        <!-- 自定义图例（由 JS 填充） -->
+        <ul id="chart-legend"></ul>
+      </div>
+    </div>
+    <!-- ③ 记录列表 -->
     <div id="view-records" class="view">
       <h2>专注记录</h2>
       <ul id="records-list"></ul>
@@ -78,7 +99,7 @@
       </form>
     </dialog>
 
-    <!-- ===== ★通用消息弹窗★（新加） ===== -->
+    <!-- ===== 通用消息弹窗 ===== -->
     <dialog id="msgDlg">
       <p id="msgText"></p>
       <menu>

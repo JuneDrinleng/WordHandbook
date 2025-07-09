@@ -5,11 +5,11 @@
   --accent: #e63946; /* 主色：红 */
   --accent-dark: #c92f39; /* 按下 / hover 深红 */
   --accent-light: #fdebec; /* 极浅红，用于焦点 */
-  --radius: 10px; /* 圆角统一 */
+  --radius: 10px; /* 统一圆角 */
   --shadow-s: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-m: 0 4px 10px rgba(0, 0, 0, 0.12);
-  --bg: #fafafa; /* 退底色，渐变做在 ::before */
-  --bg-card: #ffffff; /* 卡片背景 */
+  --bg: #fafafa;
+  --bg-card: #fff;
   --text: #333;
   --transition: 0.2s ease;
 }
@@ -22,24 +22,22 @@
 
 /* =============== 页面基础 + 渐变背景 =============== */
 body {
-  margin: 0;
-  padding-top: 36px; /* 顶部标题栏 */
-  padding-bottom: 64px; /* 底部导航 */
+  padding: 36px 0 64px; /* 顶部标题栏 + 底部导航 */
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: transparent; /* 让径向渐变透出 */
+  background: transparent; /* 透出渐变 */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", sans-serif;
   overflow: hidden;
   color: var(--text);
 }
-
-/* 双层径向渐变覆盖全屏，包括 titlebar */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
+  pointer-events: none;
+  z-index: -1;
   background: radial-gradient(
       800px circle at 60% 15%,
       rgba(230, 57, 70, 0.28) 0%,
@@ -50,8 +48,6 @@ body::before {
       rgba(255, 168, 176, 0.35) 0%,
       transparent 65%
     );
-  pointer-events: none;
-  z-index: -1;
 }
 
 /* =============== 单一按钮视图 =============== */
@@ -79,7 +75,6 @@ body::before {
 /* =============== 记录列表 =============== */
 #records-list {
   list-style: none;
-  padding: 0;
   margin-top: 12px;
 }
 .record-entry {
@@ -104,18 +99,15 @@ body::before {
   left: 0;
   width: 100%;
   height: 64px;
-  background: transparent;
-  border-top: 1px solid transparent;
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 100;
 }
 .bottom-nav button {
   background: none;
   border: none;
-  padding: 0;
   cursor: pointer;
+  padding: 0;
 }
 .bottom-nav i {
   font-size: 24px;
@@ -134,7 +126,6 @@ body::before {
   flex-direction: column;
   padding: 24px;
   overflow-y: auto;
-  background: transparent; /* 透出渐变 */
   animation: fade 0.3s ease;
 }
 .view.active {
@@ -218,7 +209,7 @@ menu button {
   background: var(--accent-light);
 }
 
-/* =============== Scrollbar Styling =============== */
+/* =============== Scrollbar =============== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -234,7 +225,133 @@ menu button {
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(230, 57, 70, 0.55);
 }
+
+/* ============================
+   ▼▼▼  新统计页相关样式  ▼▼▼
+   ============================ */
+
+/* ---- 饼图 ---- */
 #taskChart {
-  margin: 16px auto; /* 水平居中 */
-  max-width: 320px;
+  width: 100%; /* 占满卡片可用宽度 */
+  max-width: 200px; /* 上限，防止过大；按需改数值 */
+  aspect-ratio: 1 / 1; /* 保持正方形 */
+  height: auto; /* 跟随宽度自动缩放 */
+  margin: 16px auto; /* 继续水平居中 */
+}
+
+/* ---- 标题 & 日期范围 ---- */
+.stats-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.stats-title #date-range {
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* ---- 粒度切换 Tabs ---- */
+.scope-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin: 12px 0 8px;
+}
+.scope-tabs .tab {
+  flex: 1 1 60px;
+  padding: 4px 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid var(--accent-light);
+  border-radius: 18px 18px 0 0;
+  background: #fff;
+  transition: background var(--transition);
+}
+.scope-tabs .tab.active,
+.scope-tabs .tab:hover {
+  background: var(--accent-light);
+}
+
+/* ---- 汇总行 ---- */
+#summary-line {
+  text-align: center;
+  margin: 18px 0 6px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* ---- 查看纵览按钮 ---- */
+#btn-week-view {
+  display: block;
+  margin: 0 auto 12px;
+  padding: 6px 22px;
+  border: none;
+  border-radius: 18px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+#btn-week-view:hover {
+  background: rgba(230, 57, 70, 0.18);
+}
+
+/* ---- 自定义图例 ---- */
+#chart-legend {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  list-style: none;
+  padding: 0 8px;
+}
+#chart-legend li {
+  display: flex;
+  align-items: center;
+  margin: 4px 12px;
+}
+#chart-legend li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  background: currentColor;
+}
+/* ===== 统计页卡片 ===== */
+.stats-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-s);
+  padding: 16px 20px 20px;
+  margin-top: 10px;
+}
+/* --- 统计页主标题 --- */
+#view-stats > h2 {
+  text-align: center; /* 居中 */
+  font-size: 1.6rem; /* 比默认略大 */
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+#view-records > h2 {
+  text-align: center; /* 居中 */
+  font-size: 1.6rem; /* 比默认略大 */
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+/* --- stats-title 行（日期范围） --- */
+.stats-title {
+  font-size: 1rem; /* 略小于主标题 */
+  font-weight: 500;
+  color: #555;
+  letter-spacing: 0.3px;
+}
+.stats-title #date-range {
+  /* 让日期显眼一点 */
+  color: var(--accent-dark);
+  font-weight: 600;
 }
