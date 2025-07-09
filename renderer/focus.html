@@ -36,6 +36,14 @@
         <div id="recent-list"></div>
         <!-- JS 动态填充 -->
       </div>
+      <!-- 今日 To-Do -->
+      <div id="todo-container">
+        <button id="addTodoBtn" class="todo-action">
+          今日待办 <i class="fa-solid fa-plus"></i>
+        </button>
+        <ul id="todo-list"></ul>
+        <!-- JS 渲染 -->
+      </div>
     </div>
 
     <!-- ② 统计页（重构） -->
@@ -78,6 +86,14 @@
         <button onclick="editRecord()">修改记录</button>
         <button onclick="deleteRecord()">删除记录</button>
       </div>
+      <div
+        id="todo-menu"
+        style="display: none; position: absolute; z-index: 9999"
+        class="ctx"
+      >
+        <button onclick="editTodo()">修改</button>
+        <button onclick="deleteTodo()">删除</button>
+      </div>
     </div>
 
     <!-- ===== 任务输入弹窗 ===== -->
@@ -110,6 +126,17 @@
       <menu>
         <button id="msgOk" value="default" class="primary">确定</button>
       </menu>
+    </dialog>
+    <!-- ===== to do list消息弹窗 ===== -->
+    <dialog id="todoDlg">
+      <form method="dialog">
+        <p style="margin-bottom: 8px">今日任务：</p>
+        <input id="todoInput" required />
+        <menu>
+          <button id="todoOk" value="default" class="primary">保存</button>
+          <button value="cancel">取消</button>
+        </menu>
+      </form>
     </dialog>
 
     <!-- ===== 底部导航 ===== -->

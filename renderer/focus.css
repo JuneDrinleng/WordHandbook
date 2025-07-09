@@ -2,18 +2,16 @@
    Global Theme & Reset
    ===================== */
 :root {
-  --accent: #e63946; /* 主色：红 */
-  --accent-dark: #c92f39; /* 按下 / hover 深红 */
-  --accent-light: #fdebec; /* 极浅红，用于焦点 */
-  --radius: 10px; /* 统一圆角 */
+  --accent: #e63946;
+  --accent-dark: #c92f39;
+  --accent-light: #fdebec;
+  --radius: 10px;
   --shadow-s: 0 1px 3px rgba(0, 0, 0, 0.08);
   --shadow-m: 0 4px 10px rgba(0, 0, 0, 0.12);
-  --bg: #fafafa;
   --bg-card: #fff;
   --text: #333;
   --transition: 0.2s ease;
 }
-
 * {
   margin: 0;
   padding: 0;
@@ -22,15 +20,15 @@
 
 /* =============== 页面基础 + 渐变背景 =============== */
 body {
-  padding: 36px 0 64px; /* 顶部标题栏 + 底部导航 */
+  padding: 36px 0 64px;
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: transparent; /* 透出渐变 */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     "Helvetica Neue", sans-serif;
-  overflow: hidden;
   color: var(--text);
+  overflow: hidden;
+  background: transparent;
 }
 body::before {
   content: "";
@@ -50,46 +48,26 @@ body::before {
     );
 }
 
-/* =============== 单一按钮视图 =============== */
-#view-start {
-  justify-content: center;
-  align-items: center;
-}
-#toggle {
-  padding: 18px 40px;
-  font-size: 1.1rem;
-  border: none;
-  border-radius: 14px;
-  background: var(--accent);
-  color: #fff;
-  cursor: pointer;
-  transition: transform 0.15s ease, background var(--transition);
-}
-#toggle:hover {
-  background: var(--accent-dark);
-}
-#toggle:active {
-  transform: scale(0.96);
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-/* =============== 记录列表 =============== */
-#records-list {
-  list-style: none;
-  margin-top: 12px;
+/* =============== 视图区 =============== */
+.view {
+  flex: 1;
+  display: none;
+  flex-direction: column;
+  padding: 24px;
+  overflow-y: auto;
+  animation: fade 0.3s ease;
 }
-.record-entry {
+.view.active {
   display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 12px 16px;
-  margin-bottom: 8px;
-  box-shadow: var(--shadow-s);
-  transition: box-shadow var(--transition);
-}
-.record-entry:hover {
-  box-shadow: var(--shadow-m);
 }
 
 /* =============== 底部导航 =============== */
@@ -107,40 +85,236 @@ body::before {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
 }
 .bottom-nav i {
   font-size: 24px;
   color: #666;
-  transition: color var(--transition), transform var(--transition);
+  transition: color var(--transition);
 }
 .bottom-nav button.active i,
 .bottom-nav button:hover i {
   color: var(--accent);
 }
 
-/* =============== 视图容器 =============== */
-.view {
-  flex-grow: 1;
-  display: none;
-  flex-direction: column;
-  padding: 24px;
-  overflow-y: auto;
-  animation: fade 0.3s ease;
+/* =============== 开始专注页 =============== */
+#view-start {
+  width: 100%;
+  align-items: stretch;
+  text-align: center;
 }
-.view.active {
-  display: flex;
+#toggle {
+  align-self: center;
+  margin: 0 auto 32px;
+  padding: 18px 40px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s, box-shadow 0.2s, background var(--transition);
 }
-@keyframes fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+#toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+#toggle:active {
+  transform: scale(0.96);
 }
 
-/* =============== dialog =============== */
+/* ---------- 标题统一居中 ---------- */
+#recent-container h3,
+#todo-container h3,
+.stats-title,
+#view-records h2,
+#view-stats h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #555;
+  text-align: center;
+  margin: 0 0 12px;
+}
+
+/* ---------- 最近任务 ---------- */
+#recent-container {
+  width: 100%;
+  margin-bottom: 40px;
+}
+#recent-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.recent-task-btn {
+  padding: 7px 16px;
+  border: none;
+  border-radius: 18px;
+  font-weight: 600; /* 加粗，中英文一致 */
+  background: linear-gradient(to bottom, var(--accent-light), #fff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: background var(--transition), transform 0.15s;
+}
+.recent-task-btn:hover {
+  background: linear-gradient(to bottom, rgba(230, 57, 70, 0.15), #fff);
+}
+.recent-task-btn:active {
+  transform: scale(0.94);
+}
+
+/* ---------- 今日待办 ---------- */
+#todo-container {
+  width: 100%;
+}
+.todo-header {
+  display: flex;
+  justify-content: center; /* 标题+按钮整体水平居中 */
+  align-items: center; /* 垂直对齐 */
+  gap: 8px; /* 间距 */
+  margin: 32px 0 12px; /* 与上下内容留白 */
+}
+.todo-header h3 {
+  margin: 0; /* 去掉默认外边距 */
+  display: inline-block; /* 让标题占内容宽度，与按钮同行 */
+} /* 居中排列，无下边线 */
+#addTodoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  margin-bottom: 16px;
+  font-size: 1.05rem; /* 字号与标题一致 */
+  font-weight: 600; /* 加粗 */
+  border: none;
+  border-radius: 30px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  cursor: pointer;
+  transition: background var(--transition), transform 0.15s;
+}
+#addTodoBtn:hover {
+  background: rgba(230, 57, 70, 0.25);
+}
+#addTodoBtn:active {
+  transform: scale(0.9);
+}
+#todo-list {
+  width: 100%;
+  list-style: none;
+}
+.todo-item.record-entry {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-s);
+  cursor: pointer;
+  transition: box-shadow var(--transition);
+}
+.todo-item.record-entry:hover {
+  box-shadow: var(--shadow-m);
+}
+.todo-item.record-entry span {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600; /* 加粗，和单词本一致 */
+  text-align: left;
+}
+.todo-item.done span {
+  text-decoration: line-through;
+  color: #999;
+}
+
+/* =============== 通用记录条样式 =============== */
+.record-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-s);
+  transition: box-shadow var(--transition);
+}
+.record-entry:hover {
+  box-shadow: var(--shadow-m);
+}
+
+/* =============== 统计页 =============== */
+#taskChart {
+  width: 100%;
+  max-width: 200px;
+  aspect-ratio: 1/1;
+  height: auto;
+  margin: 16px auto;
+}
+.stats-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #555;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.stats-title #date-range {
+  color: var(--accent-dark);
+  font-weight: 600;
+}
+.scope-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  margin: 12px 0 8px;
+}
+.scope-tabs .tab {
+  flex: 1 1 60px;
+  padding: 4px 0;
+  font-size: 0.9rem;
+  border: 1px solid var(--accent-light);
+  border-radius: 18px 18px 0 0;
+  cursor: pointer;
+  background: #fff;
+  transition: background var(--transition);
+}
+.scope-tabs .tab.active,
+.scope-tabs .tab:hover {
+  background: var(--accent-light);
+}
+#summary-line {
+  text-align: center;
+  margin: 18px 0 6px;
+  font-size: 1rem;
+  font-weight: 500;
+}
+#chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  font-size: 0.85rem;
+  list-style: none;
+  padding: 0 8px;
+}
+#chart-legend li {
+  display: flex;
+  align-items: center;
+  margin: 4px 12px;
+}
+#chart-legend li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: currentColor;
+}
+
+/* =============== Dialog =============== */
 dialog {
   border: none;
   border-radius: 14px;
@@ -184,15 +358,15 @@ menu button {
   background: var(--accent-dark);
 }
 
-/* =============== context menu for records =============== */
+/* =============== Context Menu =============== */
 #context-menu {
   position: absolute;
   display: none;
+  z-index: 9999;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: var(--radius);
   box-shadow: var(--shadow-m);
-  z-index: 9999;
   overflow: hidden;
 }
 #context-menu button {
@@ -209,7 +383,7 @@ menu button {
   background: var(--accent-light);
 }
 
-/* =============== Scrollbar =============== */
+/* =============== 滚动条 =============== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -220,167 +394,8 @@ menu button {
 ::-webkit-scrollbar-thumb {
   background-color: rgba(230, 57, 70, 0.25);
   border-radius: 6px;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s;
 }
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(230, 57, 70, 0.55);
-}
-
-/* ============================
-   ▼▼▼  新统计页相关样式  ▼▼▼
-   ============================ */
-
-/* ---- 饼图 ---- */
-#taskChart {
-  width: 100%; /* 占满卡片可用宽度 */
-  max-width: 200px; /* 上限，防止过大；按需改数值 */
-  aspect-ratio: 1 / 1; /* 保持正方形 */
-  height: auto; /* 跟随宽度自动缩放 */
-  margin: 16px auto; /* 继续水平居中 */
-}
-
-/* ---- 标题 & 日期范围 ---- */
-.stats-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  text-align: center;
-  margin-bottom: 4px;
-}
-.stats-title #date-range {
-  font-weight: 400;
-  margin-left: 4px;
-}
-
-/* ---- 粒度切换 Tabs ---- */
-.scope-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 2px;
-  margin: 12px 0 8px;
-}
-.scope-tabs .tab {
-  flex: 1 1 60px;
-  padding: 4px 0;
-  font-size: 0.9rem;
-  cursor: pointer;
-  border: 1px solid var(--accent-light);
-  border-radius: 18px 18px 0 0;
-  background: #fff;
-  transition: background var(--transition);
-}
-.scope-tabs .tab.active,
-.scope-tabs .tab:hover {
-  background: var(--accent-light);
-}
-
-/* ---- 汇总行 ---- */
-#summary-line {
-  text-align: center;
-  margin: 18px 0 6px;
-  font-size: 1rem;
-  font-weight: 500;
-}
-
-/* ---- 查看纵览按钮 ---- */
-#btn-week-view {
-  display: block;
-  margin: 0 auto 12px;
-  padding: 6px 22px;
-  border: none;
-  border-radius: 18px;
-  background: var(--accent-light);
-  color: var(--accent-dark);
-  cursor: pointer;
-  transition: background var(--transition);
-}
-#btn-week-view:hover {
-  background: rgba(230, 57, 70, 0.18);
-}
-
-/* ---- 自定义图例 ---- */
-#chart-legend {
-  display: flex;
-  justify-content: space-around;
-  flex-wrap: wrap;
-  font-size: 0.85rem;
-  line-height: 1.3;
-  list-style: none;
-  padding: 0 8px;
-}
-#chart-legend li {
-  display: flex;
-  align-items: center;
-  margin: 4px 12px;
-}
-#chart-legend li::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 6px;
-  background: currentColor;
-}
-/* ===== 统计页卡片 ===== */
-.stats-card {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-s);
-  padding: 16px 20px 20px;
-  margin-top: 10px;
-}
-/* --- 统计页主标题 --- */
-#view-stats > h2 {
-  text-align: center; /* 居中 */
-  font-size: 1.6rem; /* 比默认略大 */
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-#view-records > h2 {
-  text-align: center; /* 居中 */
-  font-size: 1.6rem; /* 比默认略大 */
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-/* --- stats-title 行（日期范围） --- */
-.stats-title {
-  font-size: 1rem; /* 略小于主标题 */
-  font-weight: 500;
-  color: #555;
-  letter-spacing: 0.3px;
-}
-.stats-title #date-range {
-  /* 让日期显眼一点 */
-  color: var(--accent-dark);
-  font-weight: 600;
-}
-/* === 最近任务快捷按钮 === */
-#recent-container {
-  margin-top: 24px;
-  text-align: center;
-}
-#recent-container h3 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #555;
-  margin-bottom: 10px;
-}
-.recent-task-btn {
-  display: inline-block;
-  margin: 4px 6px;
-  padding: 6px 14px;
-  background: var(--accent-light);
-  color: var(--accent-dark);
-  border: none;
-  border-radius: 18px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background var(--transition), transform 0.15s;
-}
-.recent-task-btn:hover {
-  background: rgba(230, 57, 70, 0.25);
-}
-.recent-task-btn:active {
-  transform: scale(0.94);
 }

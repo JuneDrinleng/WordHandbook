@@ -19,7 +19,7 @@ function switchView(v) {
     );
 
   if (v === "records") loadRecords();
-  if (v === "stats") calcStats(currentScope); // 每次进入统计页刷新
+  if (v === "stats") calcStats(currentScope);
 }
 
 /**************** 开始 / 结束专注 ****************/
@@ -32,6 +32,16 @@ cancelBtn.onclick = () => dlgTask.close();
 
 let start = null,
   task = "";
+
+/* 新增：直接开始专注（不给弹窗） */
+function startFocusDirect(tName) {
+  if (start) return; // 已在专注中则忽略
+  task = tName.trim();
+  if (!task) return;
+  start = new Date();
+  btn.textContent = "结束专注";
+  toast("开始专注：" + task);
+}
 
 btn.onclick = () =>
   start ? endFocus() : (dlgTask.showModal(), inpTask.focus());
@@ -55,7 +65,16 @@ async function endFocus() {
       task,
     });
     toast("已记录专注：" + task);
-    await loadRecords(); // 保存后立即刷新
+
+    /* 若 To-Do 中存在同名且未完成的任务 → 划线 */
+    const td = todos.find((x) => x.text === task && !x.done);
+    if (td) {
+      td.done = true;
+      saveTodos();
+      renderTodos();
+    }
+
+    await loadRecords();
   } catch (err) {
     toast("记录失败：" + err.message);
   } finally {
@@ -114,8 +133,8 @@ async function loadRecords() {
     list.textContent = "加载失败";
     console.error(err);
   } finally {
-    calcStats(currentScope); // 任何变动都刷新统计
-    updateRecentTasks(); // 刷新最近任务
+    calcStats(currentScope);
+    updateRecentTasks();
   }
 }
 document.addEventListener("click", () => (menu.style.display = "none"));
@@ -197,7 +216,7 @@ function calcStats(scope = "week") {
         : scope === "month"
         ? st.getFullYear() === now.getFullYear() &&
           st.getMonth() === now.getMonth()
-        : true; // custom
+        : true;
 
     if (!within) return;
 
@@ -207,7 +226,6 @@ function calcStats(scope = "week") {
     daysInRange.add(st.toDateString());
   });
 
-  /* ---- 更新标题日期范围 & 汇总行 ---- */
   const fmt = (m) => (m >= 60 ? `${(m / 60) | 0}小时${m % 60}分` : `${m}分`);
 
   const rangeTxt =
@@ -228,7 +246,6 @@ function calcStats(scope = "week") {
     totalMins
   )}  日均 ${avg}`;
 
-  /* ---- 饼图 ---- */
   const labels = Object.entries(taskMins).map(([t, m]) => `${t}  ${fmt(m)}`);
   const data = Object.values(taskMins);
 
@@ -258,7 +275,6 @@ function calcStats(scope = "week") {
     options: { plugins: { legend: { display: false } } },
   });
 
-  /* ---- 自定义图例 ---- */
   const legendDom = document.getElementById("chart-legend");
   const meta = pieChart.getDatasetMeta(0).data;
   legendDom.innerHTML = data
@@ -271,7 +287,7 @@ function calcStats(scope = "week") {
     .join("");
 }
 
-/* Tabs 切换 */
+/* 粒度 Tabs */
 document.querySelectorAll(".scope-tabs .tab").forEach((btn) => {
   btn.onclick = () => {
     document.querySelector(".scope-tabs .active")?.classList.remove("active");
@@ -280,28 +296,11 @@ document.querySelectorAll(".scope-tabs .tab").forEach((btn) => {
   };
 });
 
-/**************** 工具函数 ****************/
-function toLocalStr(d) {
-  const pad = (n) => String(n).padStart(2, "0");
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
-    `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-  );
-}
-function parseAny(str) {
-  if (str.includes("T")) return new Date(str); // ISO
-  const [d, t] = str.split(" ");
-  const [y, m, day] = d.split("-").map(Number);
-  const [hh, mm, ss] = t.split(":").map(Number);
-  return new Date(y, m - 1, day, hh, mm, ss || 0);
-}
-const diffMins = (s, e) => ((parseAny(e) - parseAny(s)) / 60000) | 0;
-/******** 最近任务快捷按钮 ********/
+/**************** 最近任务快捷按钮 ****************/
 function updateRecentTasks(max = 5) {
   const box = document.getElementById("recent-list");
   if (!box) return;
 
-  // 1. 取最新记录里的任务去重
   const seen = new Set();
   const tasks = [];
   for (let i = records.length - 1; i >= 0 && tasks.length < max; i--) {
@@ -312,30 +311,115 @@ function updateRecentTasks(max = 5) {
     }
   }
 
-  // 2. 生成按钮
   box.innerHTML = tasks
     .map(
       (t) => `<button class="recent-task-btn" data-task="${t}">${t}</button>`
     )
     .join("");
 
-  // 3. 点击 = 预填任务名并弹窗
   box.querySelectorAll(".recent-task-btn").forEach((b) => {
     b.onclick = () => {
+      // 仍保持弹窗行为
       inpTask.value = b.dataset.task;
       dlgTask.showModal();
       inpTask.focus();
     };
   });
 
-  // 如果没有历史任务，整个区域隐藏
   document.getElementById("recent-container").style.display = tasks.length
     ? "block"
     : "none";
 }
 
+/**************** 今日 To-Do List ****************/
+const todoDlg = document.getElementById("todoDlg");
+const todoInput = document.getElementById("todoInput");
+let todos = [];
+const todoKey = "todos-" + new Date().toDateString();
+
+function loadTodos() {
+  todos = JSON.parse(localStorage.getItem(todoKey) || "[]");
+}
+function saveTodos() {
+  localStorage.setItem(todoKey, JSON.stringify(todos));
+}
+
+function renderTodos() {
+  const list = document.getElementById("todo-list");
+  if (!list) return;
+  list.innerHTML = todos
+    .map(
+      (t) => `<li class="record-entry todo-item ${
+        t.done ? "done" : ""
+      }" data-id="${t.id}">
+                <span>${t.text}</span>
+              </li>`
+    )
+    .join("");
+
+  list.querySelectorAll(".todo-item").forEach((li) => {
+    li.onclick = () => {
+      const t = todos.find((x) => x.id === li.dataset.id);
+      startFocusDirect(t.text); // 直接进入专注，无弹窗
+    };
+    li.oncontextmenu = (e) => {
+      e.preventDefault();
+      const t = todos.find((x) => x.id === li.dataset.id);
+      todoInput.value = t.text;
+      todoDlg.dataset.editId = t.id;
+      todoDlg.showModal();
+    };
+  });
+
+  document.getElementById("todo-list").style.display = todos.length
+    ? "block"
+    : "none";
+}
+
+/* 添加 / 编辑 To-Do */
+document.getElementById("addTodoBtn").onclick = () => {
+  delete todoDlg.dataset.editId;
+  todoInput.value = "";
+  todoDlg.showModal();
+  todoInput.focus();
+};
+
+document.getElementById("todoOk").onclick = (e) => {
+  e.preventDefault();
+  const txt = todoInput.value.trim();
+  if (!txt) return;
+  const editId = todoDlg.dataset.editId;
+  if (editId) {
+    todos.find((t) => t.id === editId).text = txt;
+  } else {
+    todos.push({ id: Date.now() + "", text: txt, done: false });
+  }
+  saveTodos();
+  renderTodos();
+  todoDlg.close();
+};
+
+/**************** 工具函数 ****************/
+function toLocalStr(d) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+    `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  );
+}
+function parseAny(str) {
+  if (str.includes("T")) return new Date(str);
+  const [d, t] = str.split(" ");
+  const [y, m, day] = d.split("-").map(Number);
+  const [hh, mm, ss] = t.split(":").map(Number);
+  return new Date(y, m - 1, day, hh, mm, ss || 0);
+}
+const diffMins = (s, e) => ((parseAny(e) - parseAny(s)) / 60000) | 0;
+
 /**************** 初始化 ****************/
+loadTodos();
 loadRecords().then(() => {
   calcStats("week");
   updateRecentTasks();
+  renderTodos();
 });
