@@ -355,3 +355,32 @@ menu button {
   color: var(--accent-dark);
   font-weight: 600;
 }
+/* === 最近任务快捷按钮 === */
+#recent-container {
+  margin-top: 24px;
+  text-align: center;
+}
+#recent-container h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 10px;
+}
+.recent-task-btn {
+  display: inline-block;
+  margin: 4px 6px;
+  padding: 6px 14px;
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  border: none;
+  border-radius: 18px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background var(--transition), transform 0.15s;
+}
+.recent-task-btn:hover {
+  background: rgba(230, 57, 70, 0.25);
+}
+.recent-task-btn:active {
+  transform: scale(0.94);
+}

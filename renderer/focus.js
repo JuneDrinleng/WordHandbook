@@ -115,6 +115,7 @@ async function loadRecords() {
     console.error(err);
   } finally {
     calcStats(currentScope); // 任何变动都刷新统计
+    updateRecentTasks(); // 刷新最近任务
   }
 }
 document.addEventListener("click", () => (menu.style.display = "none"));
@@ -295,6 +296,46 @@ function parseAny(str) {
   return new Date(y, m - 1, day, hh, mm, ss || 0);
 }
 const diffMins = (s, e) => ((parseAny(e) - parseAny(s)) / 60000) | 0;
+/******** 最近任务快捷按钮 ********/
+function updateRecentTasks(max = 5) {
+  const box = document.getElementById("recent-list");
+  if (!box) return;
+
+  // 1. 取最新记录里的任务去重
+  const seen = new Set();
+  const tasks = [];
+  for (let i = records.length - 1; i >= 0 && tasks.length < max; i--) {
+    const t = records[i].task;
+    if (t && !seen.has(t)) {
+      seen.add(t);
+      tasks.push(t);
+    }
+  }
+
+  // 2. 生成按钮
+  box.innerHTML = tasks
+    .map(
+      (t) => `<button class="recent-task-btn" data-task="${t}">${t}</button>`
+    )
+    .join("");
+
+  // 3. 点击 = 预填任务名并弹窗
+  box.querySelectorAll(".recent-task-btn").forEach((b) => {
+    b.onclick = () => {
+      inpTask.value = b.dataset.task;
+      dlgTask.showModal();
+      inpTask.focus();
+    };
+  });
+
+  // 如果没有历史任务，整个区域隐藏
+  document.getElementById("recent-container").style.display = tasks.length
+    ? "block"
+    : "none";
+}
 
 /**************** 初始化 ****************/
-loadRecords().then(() => calcStats("week"));
+loadRecords().then(() => {
+  calcStats("week");
+  updateRecentTasks();
+});
