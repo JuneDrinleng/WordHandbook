@@ -3,3 +3,5 @@ wordbook.db
 /dist
 /dist
 /dist
+/local/dist
+/local/node_modules

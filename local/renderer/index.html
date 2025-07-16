@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="./index.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+  </head>
+  <body style="padding-top: 36px">
+    <div class="titlebar">
+      <div class="pin-toggle" onclick="togglePin()" title="置顶切换">
+        <i id="pin-icon" class="fa-solid fa-thumbtack"></i>
+      </div>
+      <div class="window-controls">
+        <div
+          class="btn min"
+          onclick="window.api.winControl('minimize')"
+          data-tooltip="最小化"
+        ></div>
+        <div
+          class="btn max"
+          onclick="window.api.winControl('maximize')"
+          data-tooltip="最大化"
+        ></div>
+        <div
+          class="btn close"
+          onclick="window.api.winControl('close')"
+          data-tooltip="关闭"
+        ></div>
+      </div>
+    </div>
+
+    <!-- 添加生词页 -->
+    <div id="view-input" class="view">
+      <div class="input-wrapper">
+        <h2>添加生词</h2>
+        <div class="form-group">
+          <label for="en">英文单词</label>
+          <input id="en" placeholder="如：apple" />
+        </div>
+        <div class="form-group">
+          <label for="zh">中文释义</label>
+          <input id="zh" placeholder="如：苹果" />
+        </div>
+        <button id="saveBtn"><i class="fa fa-save"></i> 保存词条</button>
+        <p
+          id="error-msg"
+          style="color: red; font-size: 14px; margin-top: 10px; display: none"
+        ></p>
+      </div>
+    </div>
+
+    <!-- 展示词汇页 -->
+    <div id="view-display" class="view active">
+      <h2>生词本</h2>
+      <input id="search" placeholder="搜索中/英文" />
+      <ul id="results"></ul>
+      <div id="context-menu">
+        <button onclick="deleteWord()">删除词条</button>
+        <button onclick="editWord()">修改词条</button>
+      </div>
+    </div>
+
+    <!-- 设置页 -->
+    <div id="view-settings" class="view">
+      <h2>设置</h2>
+
+      <!-- 导入导出卡片 -->
+      <div class="settings-card">
+        <h3><i class="fa fa-file-csv"></i> 导入 / 导出</h3>
+        <div class="settings-buttons">
+          <button onclick="importCSV()">
+            <i class="fa fa-file-import"></i> 导入CSV文件
+          </button>
+          <button onclick="exportCSV()">
+            <i class="fa fa-file-export"></i> 导出为CSV文件
+          </button>
+        </div>
+      </div>
+
+      <!-- 清空单词本卡片 -->
+      <div class="settings-card danger-card">
+        <h3><i class="fa fa-trash"></i> 清空单词本</h3>
+        <p style="margin-bottom: 10px; color: #b00020">
+          此操作不可恢复，请谨慎操作。
+        </p>
+        <button onclick="clearAllWords()" class="danger-button">
+          <i class="fa fa-trash"></i> 立即清空所有词条
+        </button>
+      </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+      <button onclick="switchView('input')">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+      <button class="active" onclick="switchView('display')">
+        <i class="fa-solid fa-list"></i>
+      </button>
+      <button onclick="switchView('settings')">
+        <i class="fa-solid fa-gear"></i>
+      </button>
+    </div>
+
+    <!-- 编辑模态框 -->
+    <div id="edit-modal" class="modal">
+      <div class="modal-content">
+        <h3>修改词条</h3>
+        <p>英文</p>
+        <input id="edit-en" placeholder="英文" />
+        <p>中文</p>
+        <input id="edit-zh" placeholder="中文" />
+        <div class="modal-actions">
+          <button onclick="confirmEdit()">保存</button>
+          <button onclick="closeModal()">取消</button>
+        </div>
+      </div>
+    </div>
+    <!-- 通用提示模态框 -->
+    <div id="custom-modal" class="modal">
+      <div class="modal-content">
+        <h3 id="modal-title">提示</h3>
+        <p id="modal-message"></p>
+        <div class="modal-actions">
+          <button id="modal-ok">确定</button>
+          <button id="modal-cancel" style="display: none">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JS 脚本 -->
+    <script>
+      let allWords = [];
+      let selectedWord = null;
+
+      function switchView(view) {
+        document
+          .querySelectorAll(".view")
+          .forEach((div) => div.classList.remove("active"));
+        document.querySelector(`#view-${view}`).classList.add("active");
+
+        document
+          .querySelectorAll(".bottom-nav button")
+          .forEach((btn) => btn.classList.remove("active"));
+        event.currentTarget.classList.add("active");
+
+        if (view === "display") {
+          loadWords();
+          document.getElementById("search").value = "";
+        }
+      }
+
+      async function saveWord() {
+        const en = document.getElementById("en").value.trim();
+        const zh = document.getElementById("zh").value.trim();
+        const errorMsg = document.getElementById("error-msg");
+
+        const isEnglish = /^[a-zA-Z\s\-]+$/.test(en);
+        const isChinese = /^[\u4e00-\u9fa5\s·，。、；：“”‘’！]+$/.test(zh);
+
+        // 清空之前错误提示
+        errorMsg.style.display = "none";
+        errorMsg.textContent = "";
+
+        if (!en || !zh) {
+          errorMsg.textContent = "请填写完整的英文和中文词条！";
+          errorMsg.style.display = "block";
+          return;
+        }
+
+        if (!isEnglish) {
+          errorMsg.textContent = "英文输入框只能包含英文字母、空格或连字符！";
+          errorMsg.style.display = "block";
+          return;
+        }
+
+        if (!isChinese) {
+          errorMsg.textContent = "中文输入框只能包含中文字符和标点！";
+          errorMsg.style.display = "block";
+          return;
+        }
+
+        await window.api.saveWord({ en, zh });
+        document.getElementById("en").value = "";
+        document.getElementById("zh").value = "";
+      }
+
+      async function loadWords() {
+        allWords = await window.api.getWords();
+        renderList(allWords);
+      }
+
+      function renderList(words) {
+        const list = document.getElementById("results");
+        list.innerHTML = "";
+        words.forEach((w) => {
+          const li = document.createElement("li");
+          li.className = "entry";
+          li.innerHTML = `<span>${w.en}</span><span>${w.zh}</span>`;
+          li.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            selectedWord = w;
+            const menu = document.getElementById("context-menu");
+            menu.style.top = `${e.pageY}px`;
+            menu.style.left = `${e.pageX}px`;
+            menu.style.display = "block";
+          });
+          list.appendChild(li);
+        });
+      }
+
+      document.addEventListener("click", () => {
+        document.getElementById("context-menu").style.display = "none";
+      });
+
+      document.getElementById("search").addEventListener("input", async (e) => {
+        const kw = e.target.value.trim();
+        if (!kw) return renderList(allWords);
+        const filtered = await window.api.searchWord(kw);
+        renderList(filtered);
+      });
+
+      function deleteWord() {
+        if (selectedWord) {
+          window.api.deleteWord(selectedWord.id).then(() => {
+            loadWords();
+            selectedWord = null;
+          });
+        }
+      }
+
+      function editWord() {
+        if (selectedWord) {
+          document.getElementById("edit-en").value = selectedWord.en;
+          document.getElementById("edit-zh").value = selectedWord.zh;
+          document.getElementById("edit-modal").style.display = "flex";
+        }
+      }
+
+      function confirmEdit() {
+        const newEn = document.getElementById("edit-en").value.trim();
+        const newZh = document.getElementById("edit-zh").value.trim();
+        if (newEn && newZh && selectedWord) {
+          window.api
+            .updateWord({ id: selectedWord.id, en: newEn, zh: newZh })
+            .then(() => {
+              loadWords();
+              closeModal();
+              selectedWord = null;
+            });
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("edit-modal").style.display = "none";
+      }
+
+      loadWords();
+      document.getElementById("saveBtn").addEventListener("click", saveWord);
+
+      let isPinned = false;
+
+      async function togglePin() {
+        isPinned = !isPinned;
+        await window.api.setAlwaysOnTop(isPinned);
+
+        const pin = document.querySelector(".pin-toggle");
+        if (isPinned) {
+          pin.classList.add("pinned");
+        } else {
+          pin.classList.remove("pinned");
+        }
+      }
+
+      async function importCSV() {
+        const path = await window.api.selectCSVFile();
+        if (path) {
+          const count = await window.api.importFromCSV(path);
+          await showModal(`成功导入 ${count} 条词条！`);
+          loadWords();
+        }
+      }
+
+      async function exportCSV() {
+        const path = await window.api.selectSavePath();
+        if (path) {
+          await window.api.exportToCSV(path);
+          await showModal("导出成功！");
+        }
+      }
+      async function clearAllWords() {
+        const confirmed = await showModal(
+          "确定要清空所有单词吗？此操作不可恢复！",
+          { showCancel: true }
+        );
+        if (!confirmed) return;
+
+        await window.api.clearWords();
+        showModal("已清空！");
+        loadWords(); // 刷新页面
+      }
+
+      function showModal(message, options = {}) {
+        return new Promise((resolve) => {
+          const modal = document.getElementById("custom-modal");
+          const title = document.getElementById("modal-title");
+          const msg = document.getElementById("modal-message");
+          const okBtn = document.getElementById("modal-ok");
+          const cancelBtn = document.getElementById("modal-cancel");
+
+          title.textContent = options.title || "提示";
+          msg.textContent = message;
+          okBtn.textContent = options.okText || "确定";
+          cancelBtn.textContent = options.cancelText || "取消";
+
+          // 显示或隐藏取消按钮
+          if (options.showCancel) {
+            cancelBtn.style.display = "inline-block";
+          } else {
+            cancelBtn.style.display = "none";
+          }
+
+          modal.style.display = "flex";
+
+          okBtn.onclick = () => {
+            modal.style.display = "none";
+            resolve(true);
+          };
+          cancelBtn.onclick = () => {
+            modal.style.display = "none";
+            resolve(false);
+          };
+        });
+      }
+    </script>
+  </body>
+</html>

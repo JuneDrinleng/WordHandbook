@@ -1,0 +1,437 @@
+/* =====================
+   Global Theme & Reset
+   ===================== */
+:root {
+  --accent: #e63946; /* 主色：红 */
+  --accent-dark: #c92f39; /* 按下 / hover 深红 */
+  --accent-light: #fdebec; /* 极浅红，用于焦点 */
+  --radius: 10px; /* 圆角统一 */
+  --shadow-s: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-m: 0 4px 10px rgba(0, 0, 0, 0.12);
+  --bg: #fafafa; /* 退底色，渐变做在 ::before */
+  --bg-card: #ffffff; /* 卡片背景 */
+  --text: #333; /* 主文字色 */
+  --transition: 0.2s ease; /* 动画节奏 */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  width: 100vw;
+  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", sans-serif;
+  background: transparent; /* 让径向渐变完全可见 */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--text);
+}
+
+/* 亮色柔和径向渐变 – 覆盖全屏，包括 titlebar */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  /* 双层径向渐变，主红 + 浅粉，叠加更有层次 */
+  background: radial-gradient(
+      800px circle at 60% 15%,
+      rgba(230, 57, 70, 0.28) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      600px circle at 20% 85%,
+      rgba(255, 168, 176, 0.35) 0%,
+      transparent 65%
+    );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* =====================
+   Titlebar & Traffic-lights
+   ===================== */
+.titlebar {
+  height: 36px;
+  -webkit-app-region: drag;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 12px;
+  background: transparent; /* 透出上面的径向渐变 */
+  border-bottom: 1px solid transparent;
+  z-index: 1000;
+}
+.window-controls {
+  display: flex;
+  gap: 10px;
+}
+.window-controls .btn {
+  -webkit-app-region: no-drag;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+}
+.btn.min {
+  background: #ffbd2e;
+}
+.btn.max {
+  background: #28c940;
+}
+.btn.close {
+  background: #ff5f57;
+}
+/* X / – / + 线段 */
+.window-controls .btn::before,
+.window-controls .btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 1.5px;
+  background: #fff;
+  border-radius: 1px;
+  transform: translate(-50%, -50%) rotate(var(--r, 0deg));
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+.window-controls .btn:hover::before,
+.window-controls .btn:hover::after {
+  opacity: 1;
+}
+.btn.close::before {
+  --r: 45deg;
+}
+.btn.close::after {
+  --r: -45deg;
+}
+.btn.min::before {
+  display: none;
+}
+.btn.min::after {
+  --r: 0deg;
+}
+.btn.max::before {
+  --r: 0deg;
+}
+.btn.max::after {
+  --r: 90deg;
+}
+/* =====================
+   pin Toggle Button
+   ===================== */
+.pin-toggle {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  -webkit-app-region: no-drag;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.pin-toggle i {
+  display: inline-block;
+  transform: rotate(0deg);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* 更柔和的过渡 */
+}
+
+.pin-toggle.pinned i {
+  transform: rotate(-45deg);
+  color: var(--accent);
+}
+
+/* =====================
+   View Containers
+   ===================== */
+.view {
+  flex-grow: 1;
+  display: none;
+  flex-direction: column;
+  padding: 24px;
+  overflow-y: auto;
+  animation: fade 0.3s ease;
+  background: transparent; /* 让径向渐变透过 */
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.view.active {
+  display: flex;
+}
+.view h2 {
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+.form-group label {
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #666;
+}
+
+#saveBtn i {
+  margin-right: 6px;
+}
+
+/* 使输入框宽度适中居中 */
+#view-input {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.input-wrapper {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 隐藏非激活页面，防止内容错乱显示 */
+.view:not(.active) {
+  display: none !important;
+}
+
+/* =====================
+   Form Elements
+   ===================== */
+input {
+  border: 1px solid #d0d0d0;
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 15px;
+  background: #fff;
+  transition: border var(--transition), box-shadow var(--transition);
+}
+input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+button {
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 10px 18px;
+  transition: background var(--transition), transform var(--transition);
+}
+button:active {
+  transform: translateY(1px);
+}
+#saveBtn,
+.modal-actions button:first-child {
+  background: var(--accent);
+  color: #fff;
+}
+#saveBtn:hover,
+.modal-actions button:first-child:hover {
+  background: var(--accent-dark);
+}
+.modal-actions button:last-child {
+  background: #f0f0f0;
+  color: #444;
+}
+.modal-actions button:last-child:hover {
+  background: #e2e2e2;
+}
+
+/* =====================
+   Word List
+   ===================== */
+ul {
+  list-style: none;
+  padding: 0;
+  margin-top: 10px;
+}
+.entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow-s);
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.entry:hover {
+  box-shadow: var(--shadow-m);
+  transform: translateY(-2px);
+}
+.entry span:first-child {
+  font-weight: 500;
+  color: #222;
+}
+.entry span:last-child {
+  color: #555;
+}
+
+/* =====================
+   Context Menu
+   ===================== */
+#context-menu {
+  position: absolute;
+  display: none;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-m);
+  z-index: 9999;
+  overflow: hidden;
+}
+#context-menu button {
+  padding: 8px 16px;
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background var(--transition);
+}
+#context-menu button:hover {
+  background: var(--accent-light);
+}
+
+/* =====================
+   Modal Dialog
+   ===================== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+.modal-content {
+  background: #fff;
+  padding: 24px;
+  border-radius: var(--radius);
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-m);
+  animation: fadeIn 0.25s ease;
+}
+.modal-content h3 {
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* =====================
+   Bottom Navigation
+   ===================== */
+.bottom-nav {
+  height: 64px;
+  background: transparent;
+  border-top: 1px solid transparent;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+.bottom-nav button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+}
+.bottom-nav i {
+  font-size: 24px;
+  color: #666;
+  transition: color var(--transition), transform var(--transition);
+}
+.bottom-nav button.active i,
+.bottom-nav button:hover i {
+  color: var(--accent);
+}
+
+/* =====================
+   Settings 卡片样式
+   ===================== */
+#view-settings p {
+  margin-top: 6px;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.settings-card {
+  background: var(--bg-card);
+  box-shadow: var(--shadow-m);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: box-shadow var(--transition);
+}
+
+.settings-card h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+
+.settings-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.danger-card {
+  border-left: 4px solid var(--accent);
+}
+
+.danger-button {
+  background: var(--accent);
+  color: #fff;
+}
+
+.danger-button:hover {
+  background: var(--accent-dark);
+}
