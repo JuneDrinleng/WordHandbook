@@ -29,6 +29,7 @@
   <img width="879" height="1576" alt="image" src="https://github.com/user-attachments/assets/2f2b0671-f74c-4e62-88d0-06fedbda1963" alt="图1" style="width: 45%; margin-right: 10px;" />
   <img width="879" height="1576" alt="image" src="https://github.com/user-attachments/assets/1e463a09-14c6-4317-bb84-b1ee7cc49cd8" alt="图2" style="width: 45%;" />
 </div>
+
 ### 2.3 电量查询
 在设置页输入清华家园网的账号和密码后，便可以查询电量，根据电量情况，页面会从绿色变成黄色最后变为红色：
 <img width="2002" height="1483" alt="image" src="https://github.com/user-attachments/assets/27eb280b-bc99-48e9-b391-7eec09fc3b46" />
