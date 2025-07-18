@@ -1,4 +1,4 @@
-# WordHandbook
+# Phd Assistant
 
 ## 1 Brief Introduction
 
@@ -7,10 +7,32 @@
 借鉴 native speaker 的词汇有时候可能比用 ai 或者翻译工具的得来的更原汁原味
 
 ## 2 Overview
+多种工具任君使用：  
 
+<img width="273" height="379" alt="image" src="https://github.com/user-attachments/assets/2483814b-d4b5-4aa8-92d0-1f4acb8a7c34" style="zoom:50%;"/>
+
+### 2.1 单词本功能：
 快速检索的单词本，方便的实现添加生词，可以直接以 csv 格式导入和导出。
 
-<img src="./README.assets/image-20250701134726240.png" alt="image-20250701134726240" style="zoom:50%;" />
+<img src="./README.assets/image-20250701134726240.png" alt="image-20250701134726240" style="zoom:50%;" />  
+
+注意，离线版本只有1.0.0版本可行，后续的所有版本都需要在服务器端配置数据库
+
+### 2.2 番茄钟专注
+可以设置今日待办，自动统计最近常用的专注任务方便快速开始专注
+<div style="display: flex; justify-content: space-around;">
+  <img src="https://github.com/user-attachments/assets/ad9c7f3a-90cb-4791-9d62-2191083cc7a4" alt="图1" style="width: 45%; margin-right: 10px;">
+  <img src="https://github.com/user-attachments/assets/a3d788a6-0a92-4888-9bb2-539db96e2ca1" alt="图2" style="width: 45%;">
+</div>
+对于专注时长会自动统计，包括日、周、月三个时间范围，同时专注记录也提供修改的界面：
+<div style="display: flex; justify-content: space-around;">
+  <img width="879" height="1576" alt="image" src="https://github.com/user-attachments/assets/2f2b0671-f74c-4e62-88d0-06fedbda1963" alt="图1" style="width: 45%; margin-right: 10px;" />
+  <img width="879" height="1576" alt="image" src="https://github.com/user-attachments/assets/1e463a09-14c6-4317-bb84-b1ee7cc49cd8" alt="图2" style="width: 45%;" />
+</div>
+### 2.3 电量查询
+在设置页输入清华家园网的账号和密码后，便可以查询电量，根据电量情况，页面会从绿色变成黄色最后变为红色：
+<img width="2002" height="1483" alt="image" src="https://github.com/user-attachments/assets/27eb280b-bc99-48e9-b391-7eec09fc3b46" />
+
 
 # 3 Server setting
 
